@@ -1,2 +1,3 @@
-idf_component_register(SRCS "temp_sensor.cpp "
-                    INCLUDE_DIRS ".")
+idf_component_register(SRCS "main.cpp"
+                    INCLUDE_DIRS "."
+                    REQUIRES wifi)
