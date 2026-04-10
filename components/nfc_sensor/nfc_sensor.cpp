@@ -1,10 +1,6 @@
 #include "nfc_sensor.hpp"
 #include "board_spi_gpio.hpp"
 
-PN532::PN532()
-{
-    io_handle = nullptr;
-}
 
 esp_err_t PN532::init_module_and_bus()
 {
@@ -17,11 +13,11 @@ esp_err_t PN532::init_module_and_bus()
         NFC_IRQ,
         NFC_SPI_HOST,
         NFC_CLOCK_FREQ,
-        io_handle);
+        &io_handle);
     if (ret != ESP_OK)
         return ret;
 
-    ret = pn532_init(io_handle);
+    ret = pn532_init(&io_handle);
     if (ret != ESP_OK)
         return ret;
 
@@ -30,10 +26,13 @@ esp_err_t PN532::init_module_and_bus()
 
 PN532::~PN532()
 {
-    if (!io_handle) return;
 
-    pn532_release(io_handle);
-    pn532_delete_driver(io_handle);
+    pn532_release(&io_handle);
+    pn532_delete_driver(&io_handle);
 
-    io_handle = nullptr;
+}
+
+
+void PN532::readCard() {
+
 }

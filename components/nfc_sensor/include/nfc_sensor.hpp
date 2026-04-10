@@ -6,10 +6,11 @@
 
 class PN532 {
     public:
-        PN532();
+        PN532() = default;
         ~PN532();
         esp_err_t init_module_and_bus();
 
+        void readCard();
+        pn532_io_t io_handle;
     private:
-        pn532_io_handle_t io_handle;
 };

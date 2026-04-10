@@ -3,7 +3,7 @@
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
 
-constexpr gpio_num_t NFC_MISO  = (GPIO_NUM_13);
+constexpr gpio_num_t NFC_MISO  = GPIO_NUM_13;
 constexpr gpio_num_t NFC_MOSI  = GPIO_NUM_11;
 constexpr gpio_num_t NFC_SCK   = GPIO_NUM_12;
 constexpr gpio_num_t NFC_CS    = GPIO_NUM_10;
