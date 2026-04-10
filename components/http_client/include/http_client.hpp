@@ -5,4 +5,5 @@
 #include "cJSON_Utils.h"
 #include <string.h>
 
+void http_init();
 void send_POST(const char *text);
