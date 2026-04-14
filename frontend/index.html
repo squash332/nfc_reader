@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tag Manager</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Tag Manager</h1>
+
+        <!-- add tag -->
+        <div>
+            <label for="card-id">Enter Card UID:</label>
+            <input type="text" id="card-id" placeholder="Enter Card UID">
+            <button onclick="addTag()">Add Card</button>
+        </div>
+
+        <!-- existing tags -->
+        <h2>Existing Tags</h2>
+        <ul id="card-list"></ul>
+
+        <!-- message display -->
+        <div id="message"></div>
+    </div>
+
+    <script src="static/script.js">
+    </script>
+
+</body>
+</html>
