@@ -162,10 +162,15 @@ void PN532::readCard()
         return;
     }
 
+    memset(uid_string, 0, sizeof(uid_string));
+    for (int i = 0; i < uid_length; i++)
+    {
+        sprintf(uid_string + strlen(uid_string), "%02X", uid[i]);
+    }
+
     uint8_t keyA[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     uint8_t data[16];
 
-    bool authenticated = false;
 
     for (int block = 0; block < 64; block++)
     {
@@ -196,5 +201,6 @@ void PN532::readCard()
         {
             ESP_LOGE(TAG, "Read fail block %d", block);
         }
+
     }
 }

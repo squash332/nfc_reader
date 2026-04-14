@@ -10,18 +10,19 @@ static const char *TAG = "ntag_read";
 
 extern "C" void app_main()
 {
-    // nvs_init();
-    // esp_err_t wifi_status = wifi_init_sta();
-    // http_init();
+    nvs_init();
+    esp_err_t wifi_status = wifi_init_sta();
+    http_init();
 
     PN532 pn532;
 
     if (pn532.init_module_and_bus() != ESP_OK)
     {
         ESP_LOGE(TAG, "PN532 init failed");
-        // return; 
+        return;
     }
-    else {
+    else
+    {
         ESP_LOGI(TAG, "PN532 init success!");
     }
 
@@ -29,15 +30,14 @@ extern "C" void app_main()
     while (true)
     {
         ESP_LOGI("test", "bla bla");
-        
-        // if (wifi_status == WIFI_SUCCESS)
-        // {
-        //     ESP_LOGI("WIFI STATUS OK:", "SENDING MESSAGE...");
-        //     vTaskDelay(pdMS_TO_TICKS(500)); // this needs to
-        // }
-
         pn532.readCard();
 
+        if (wifi_status == WIFI_SUCCESS)
+        {
+            ESP_LOGI("WIFI STATUS OK:", "SENDING MESSAGE...");
+            send_POST(pn532.uid_string);
+            vTaskDelay(pdMS_TO_TICKS(500));
+        }
 
         vTaskDelay(pdMS_TO_TICKS(3000));
     }
