@@ -1,8 +1,6 @@
 #include "wifi.hpp"
 
-const char *ssid = "SSID";
-const char *password = "PW";
-
+#define NVS_NAMESPACE "wifi" 
 static uint32_t conn_retry_num = 0;
 static const char *TAG = "WIFI";
 
@@ -57,10 +55,13 @@ esp_err_t wifi_init_sta()
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, &wifi_handler_event_instance));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL, &got_ip_event_instance));
 
+    char ssid[32], password[64];
+    load_wifi_credentials(ssid, password);
+
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = EXAMPLE_ESP_WIFI_SSID,
-            .password = EXAMPLE_ESP_WIFI_PASS,
+            .ssid = {0},
+            .password = {0},
             .scan_method = WIFI_FAST_SCAN,
             .bssid_set = false,
             .bssid = {0},
@@ -101,6 +102,9 @@ esp_err_t wifi_init_sta()
         },
     };
 
+    strncpy((char *)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid) - 1);
+    strncpy((char *)wifi_config.sta.password, password, sizeof(wifi_config.sta.password) - 1);
+
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
@@ -115,7 +119,8 @@ esp_err_t wifi_init_sta()
 
     if (bits & WIFI_SUCCESS)
     {
-        ESP_LOGI(TAG, "Connected to ap");
+        ESP_LOGI(TAG, "Connected to AP, SAVING CREDENTIALS TO NVS");
+        save_wifi_credentials(ssid, password);
         status = WIFI_SUCCESS;
     }
     else if (bits & WIFI_FAILURE)
@@ -152,4 +157,64 @@ esp_err_t nvs_init()
     ESP_LOGI(TAG, "NVS INITIALIZED");
     // wifi_init_sta();
     return ret;
+}
+
+esp_err_t save_wifi_credentials(const char *ssid, const char *password) {
+    nvs_handle_t my_handle;
+    esp_err_t err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to open NVS handle. Error: %d", err);
+        return err;
+    }
+
+    err = nvs_set_str(my_handle, "ssid", ssid);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to save SSID to NVS. Error: %d", err);
+        return err;
+    }
+
+    err = nvs_set_str(my_handle, "password", password);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to save password to NVS. Error: %d", err);
+        return err;
+    }
+
+    err = nvs_commit(my_handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to commit changes to NVS. Error: %d", err);
+        return err;
+    }
+
+    nvs_close(my_handle);
+    ESP_LOGI(TAG, "Wi-Fi credentials saved to NVS");
+    return ESP_OK;
+}
+
+esp_err_t load_wifi_credentials(char *ssid, char *password) {
+    nvs_handle_t my_handle;
+    esp_err_t err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &my_handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to open NVS handle. Error: %d", err);
+        return err;
+    }
+
+    size_t required_size;
+    err = nvs_get_str(my_handle, "ssid", NULL, &required_size);
+    if (err == ESP_OK) {
+        nvs_get_str(my_handle, "ssid", ssid, &required_size);
+    } else {
+        ESP_LOGW(TAG, "SSID not found in NVS, using default.");
+        strcpy(ssid, "HONOR 90"); 
+    }
+
+    err = nvs_get_str(my_handle, "password", NULL, &required_size);
+    if (err == ESP_OK) {
+        nvs_get_str(my_handle, "password", password, &required_size);
+    } else {
+        ESP_LOGW(TAG, "Password not found in NVS, using default.");
+        strcpy(password, "jpbo2636"); 
+    }
+
+    nvs_close(my_handle);
+    return ESP_OK;
 }

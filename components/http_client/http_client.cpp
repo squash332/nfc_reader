@@ -7,10 +7,10 @@ static esp_http_client_handle_t client = NULL;
 void http_init(void)
 {
     esp_http_client_config_t cfg = {};
-    cfg.url = "ex";
+    cfg.url = "ex"; 
     cfg.method = HTTP_METHOD_POST;
     cfg.cert_pem = NULL;
-    cfg.timeout_ms = 9000;
+    cfg.timeout_ms = 2000;
 
     client = esp_http_client_init(&cfg);
 
@@ -33,7 +33,7 @@ void send_POST(const char *text)
     char post_data[128];
 
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "text", text);
+    cJSON_AddStringToObject(root, "text", (char *)text);
     char *json_str = cJSON_PrintUnformatted(root);
 
     snprintf(post_data, sizeof(post_data), "%s", json_str);
