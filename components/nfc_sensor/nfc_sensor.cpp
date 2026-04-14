@@ -138,7 +138,7 @@ esp_err_t PN532::readBlock(pn532_io_handle_t io_handle, uint8_t block, uint8_t *
     return ESP_OK;
 }
 
-void PN532::readCard()
+bool PN532::readCard()
 {
     uint8_t uid[7];
     uint8_t uid_length;
@@ -150,7 +150,7 @@ void PN532::readCard()
             &uid_length,
             1000) != ESP_OK)
     {
-        return;
+        return false;
     }
 
     ESP_LOGI(TAG, "UID length: %d", uid_length);
@@ -159,7 +159,7 @@ void PN532::readCard()
     if (uid_length != 4)
     {
         ESP_LOGW(TAG, "Not MIFARE Classic");
-        return;
+        return false;
     }
 
     memset(uid_string, 0, sizeof(uid_string));
@@ -168,39 +168,42 @@ void PN532::readCard()
         sprintf(uid_string + strlen(uid_string), "%02X", uid[i]);
     }
 
-    uint8_t keyA[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-    uint8_t data[16];
+    // for now we only care about UID
+    // uint8_t keyA[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    // uint8_t data[16];
 
 
-    for (int block = 0; block < 64; block++)
-    {
-        if (block % 4 == 0)
-        {
-            authenticated = false;
+    // for (int block = 0; block < 64; block++)
+    // {
+    //     if (block % 4 == 0)
+    //     {
+    //         authenticated = false;
 
-            ESP_LOGI(TAG, "Authenticating sector %d", block / 4);
+    //         ESP_LOGI(TAG, "Authenticating sector %d", block / 4);
 
-            if (authenticateBlock(&io_handle, block, keyA, uid, uid_length) != ESP_OK)
-            {
-                ESP_LOGE(TAG, "Auth failed sector %d", block / 4);
-                continue;
-            }
+    //         if (authenticateBlock(&io_handle, block, keyA, uid, uid_length) != ESP_OK)
+    //         {
+    //             ESP_LOGE(TAG, "Auth failed sector %d", block / 4);
+    //             continue;
+    //         }
 
-            authenticated = true;
-        }
+    //         authenticated = true;
+    //     }
 
-        if (!authenticated)
-            continue;
+    //     if (!authenticated)
+    //         continue;
 
-        if (readBlock(&io_handle, block, data, sizeof(data)) == ESP_OK)
-        {
-            ESP_LOGI(TAG, "Block %d:", block);
-            ESP_LOG_BUFFER_HEXDUMP(TAG, data, 16, ESP_LOG_INFO);
-        }
-        else
-        {
-            ESP_LOGE(TAG, "Read fail block %d", block);
-        }
+    //     if (readBlock(&io_handle, block, data, sizeof(data)) == ESP_OK)
+    //     {
+    //         ESP_LOGI(TAG, "Block %d:", block);
+    //         ESP_LOG_BUFFER_HEXDUMP(TAG, data, 16, ESP_LOG_INFO);
+    //     }
+    //     else
+    //     {
+    //         ESP_LOGE(TAG, "Read fail block %d", block);
+    //     }
 
-    }
+    // }
+
+    return true;
 }

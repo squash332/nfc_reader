@@ -5,8 +5,7 @@
 #include "nfc_sensor.hpp"
 #include <pn532.h>
 
-static const char *TAG = "ntag_read";
-// void test_base64();
+static const char *TAG = "MAIN";
 
 extern "C" void app_main()
 {
@@ -24,21 +23,21 @@ extern "C" void app_main()
     else
     {
         ESP_LOGI(TAG, "PN532 init success!");
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
-    vTaskDelay(pdMS_TO_TICKS(1000));
     while (true)
     {
-        ESP_LOGI("test", "bla bla");
-        pn532.readCard();
-
-        if (wifi_status == WIFI_SUCCESS)
+        if (wifi_status == WIFI_SUCCESS && pn532.readCard())
         {
-            ESP_LOGI("WIFI STATUS OK:", "SENDING MESSAGE...");
+            ESP_LOGI(TAG, "Card detected: %s", pn532.uid_string);
+            ESP_LOGI(TAG, "SENDING MESSAGE...");
             send_POST(pn532.uid_string);
-            vTaskDelay(pdMS_TO_TICKS(500));
+        }
+        else {
+            ESP_LOGI(TAG, "No card detected.");
         }
 
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
