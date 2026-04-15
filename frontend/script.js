@@ -125,6 +125,7 @@ async function handleRemove(uid) {
 
 // edit
 function enterEditMode(uid, currentName) {
+    isEditing = true;
     const li = document.getElementById(`tag-${uid}`);
     li.innerHTML = '';
 
@@ -139,7 +140,10 @@ function enterEditMode(uid, currentName) {
 
     const cancelBtn = document.createElement('button');
     cancelBtn.textContent = "Cancel";
-    cancelBtn.onclick = loadTags;
+    cancelBtn.onclick = () => {
+        isEditing = false; 
+        loadTags();  
+    };
 
     li.appendChild(input);
     li.appendChild(saveBtn);
@@ -170,8 +174,12 @@ async function handleSave(uid) {
 
 setInterval(pollTags, 5000);
 
+let isEditing = false;
+
 function pollTags() {
-    loadTags();
+    if(!isEditing) {
+        loadTags();
+    }
 }
 
 window.onload = loadTags;

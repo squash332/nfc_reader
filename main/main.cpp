@@ -32,12 +32,12 @@ extern "C" void app_main()
         {
             ESP_LOGI(TAG, "Card detected: %s", pn532.uid_string);
             ESP_LOGI(TAG, "SENDING MESSAGE...");
-            send_POST(pn532.uid_string);
+            send_POST(pn532.uid_string, "");
         }
         else {
             ESP_LOGI(TAG, "No card detected.");
         }
 
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
