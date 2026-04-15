@@ -88,11 +88,16 @@ li {
 li button {
     background-color: #f44336;
     padding: 5px 10px;
+    margin-left: 6px;
     font-size: 14px;
     border-radius: 3px;
     color: white;
     border: none;
     cursor: pointer;
+}
+
+li span {
+    flex: 1;
 }
 
 li button:hover {
