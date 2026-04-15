@@ -20,7 +20,7 @@ void http_init(void)
     }
 }
 
-void send_POST(const char *text)
+void send_POST(const char *uid, const char *name)
 {
     if (client == NULL)
     {
@@ -30,10 +30,11 @@ void send_POST(const char *text)
 
     esp_http_client_set_header(client, "Content-Type", "application/json");
 
-    char post_data[128];
+    char post_data[256];
 
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "text", (char *)text);
+    cJSON_AddStringToObject(root, "uid", (char *)uid);
+    cJSON_AddStringToObject(root, "name", (char *)name);
     char *json_str = cJSON_PrintUnformatted(root);
 
     snprintf(post_data, sizeof(post_data), "%s", json_str);
