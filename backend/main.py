@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -11,12 +12,16 @@ frontend_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".
 app.mount("/static", StaticFiles(directory=frontend_directory), name="static")
 
 TAG_FILE = "tags.json"
-class TextData(BaseModel):
-    text: str
+class Tag(BaseModel):
+    uid: str
+    name: Optional[str] = ""
+
+class UpdateTag(BaseModel):
+    name:str
 
 if not os.path.exists(TAG_FILE):
     with open(TAG_FILE, "w") as f:
-        json.dump({"tags": []}, f)
+        json.dump({"tags": {}}, f)
 
 def read_tags():
     with open(TAG_FILE, "r") as f:
@@ -25,7 +30,7 @@ def read_tags():
 
 def write_tags(tags):
     with open(TAG_FILE, "w") as f:
-        json.dump({"tags": tags}, f)
+        json.dump({"tags": tags, }, f)
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
@@ -33,33 +38,51 @@ async def root():
     with open(index_file_path, "r") as f:
         return HTMLResponse(content=f.read())
 
-@app.post("/")
-async def receive_text(data: TextData):
-    print(f"Received from ESP32S3: {data.text}")
-    return {"status": "success", "received": data.text}
-
 @app.post("/tag")
-def receive_tag(data: TextData):
+def receive_tag(data: Tag):
     tags = read_tags()
 
-    if data.text in tags:
-        return {"status": "duplicate", "message": f"Tag '{data.text}' already exists."}
-    
-    tags.append(data.text) 
+    if data.uid in tags:
+        return {"status": "duplicate"}
+
+    tags[data.uid] = {
+        "name": data.name
+    }
     write_tags(tags)  
-    return {"status": "ok", "added_tag": data.text}
+    return {"status": "ok", "added_tag": data.uid}
 
 @app.get("/tag")
 def get_tags():
     tags = read_tags()
     return {"tags": tags}
 
-@app.delete("/tag/{tag}")
-def remove_tag(tag: str):
+@app.delete("/tag/{uid}")
+def remove_tag(uid: str):
     tags = read_tags()
-    if tag in tags:
-        tags.remove(tag)
-        write_tags(tags) 
-        return {"status": "removed", "removed_tag": tag}
-    else:
-        return {"status": "not found", "message": "Tag not found"}
+
+    if uid not in tags:
+        return {"status": "not found"}
+
+    tags.pop(uid)
+    write_tags(tags)
+
+    return {"status": "removed", "removed_tag": uid}
+
+@app.put("/tag/{uid}")
+def edit_tag(uid: str, data: UpdateTag):
+    tags = read_tags()
+
+    if uid not in tags:
+        return {"status": "not found"}
+
+    tags[uid]["name"] = data.name
+
+    write_tags(tags)
+
+    return {
+        "status": "ok",
+        "uid": uid,
+        "new_name": data.name
+    }
+
+
