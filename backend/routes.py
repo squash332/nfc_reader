@@ -22,7 +22,7 @@ def receive_tag(data: Tag):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM cards WHERE card_uid = ?", (data.uid,))
+    cursor.execute("SELECT * FROM cards WHERE card_uid = ?", (data.card_uid,))
     existing = cursor.fetchone()
 
     if existing:
@@ -31,14 +31,14 @@ def receive_tag(data: Tag):
 
     # unnasigned but active
     cursor.execute("""
-        INSERT INTO cards (card_uid, is_active)
-        VALUES (?, 1)
-    """, (data.uid,))
+        INSERT INTO cards (card_uid, description, is_active)
+        VALUES (?, ?, 1)
+    """, (data.card_uid, data.description, ))
 
     conn.commit()
     conn.close()
 
-    return {"status": "ok", "added_tag": data.uid}
+    return {"status": "ok", "added_tag": data.card_uid}
 
 @router.get("/tag")
 def get_tags():
@@ -53,10 +53,11 @@ def get_tags():
     return {
         "tags": [
             {
-                "uid": r["card_uid"],
+                "card_uid": r["card_uid"],
+                "description": r["description"],
                 "id": r["id"],
                 "user_id": r["user_id"],
-                "active": r["is_active"]
+                "is_active": r["is_active"]
             }
             for r in rows
         ]
@@ -76,8 +77,7 @@ def remove_tag(uid: str):
 
     # set tag to inactive instead of deleting
     cursor.execute("""
-        UPDATE cards
-        SET is_active = 0
+        DELETE FROM cards
         WHERE card_uid = ?
     """, (uid,))
 
@@ -99,21 +99,18 @@ def edit_tag(uid: str, data: UpdateTag):
         return {"status": "not found"}
 
     # no user- you cant "name" it
-    if not card["user_id"]:
-        conn.close()
-        return {"status": "card not assigned to user"}
-
     cursor.execute("""
-        UPDATE users
-        SET full_name = ?
-        WHERE id = ?
-    """, (data.name, card["user_id"]))
+        UPDATE cards
+        SET description = ?, is_active = ?
+        WHERE card_uid = ?
+    """, (data.description, data.is_active, uid))
 
     conn.commit()
     conn.close()
 
     return {
         "status": "ok",
-        "uid": uid,
-        "new_name": data.name
+        "card_uid": uid,
+        "description": data.description,
+        "is_active": data.is_active
     }

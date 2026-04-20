@@ -4,8 +4,9 @@ from pydantic import BaseModel
 
 
 class Tag(BaseModel):
-    uid: str
-    name: Optional[str] = ""
+    card_uid: str
+    description: Optional[str] = ""
 
 class UpdateTag(BaseModel):
-    name: str
+    description: str
+    is_active : int

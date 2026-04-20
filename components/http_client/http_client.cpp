@@ -20,7 +20,7 @@ void http_init(void)
     }
 }
 
-void send_POST(const char *uid, const char *name)
+void send_POST(const char *card_uid, const char *description)
 {
     if (client == NULL)
     {
@@ -33,8 +33,8 @@ void send_POST(const char *uid, const char *name)
     char post_data[256];
 
     cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "uid", (char *)uid);
-    cJSON_AddStringToObject(root, "name", (char *)name);
+    cJSON_AddStringToObject(root, "card_uid", (char *)card_uid);
+    cJSON_AddStringToObject(root, "description", (char *)description);
     char *json_str = cJSON_PrintUnformatted(root);
 
     snprintf(post_data, sizeof(post_data), "%s", json_str);
