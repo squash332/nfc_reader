@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 import os
@@ -7,14 +9,19 @@ from models import Tag, UpdateTag
 
 router = APIRouter()
 
-frontend_directory = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "../frontend"
-)
+static_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../frontend/static")
 
 @router.get("/", response_class=HTMLResponse)
 async def root():
-    index_file_path = os.path.join(frontend_directory, "index.html")
+    index_file_path = os.path.join(static_directory, "../templates/index.html")
     with open(index_file_path, "r") as f:
+        return HTMLResponse(content=f.read())
+    
+
+@router.get("/details", response_class=HTMLResponse)
+async def details():
+    details_file_path = os.path.join(static_directory, "../templates/details.html")
+    with open(details_file_path, "r") as f:
         return HTMLResponse(content=f.read())
     
 @router.post("/tag")
@@ -114,3 +121,48 @@ def edit_tag(uid: str, data: UpdateTag):
         "description": data.description,
         "is_active": data.is_active
     }
+
+@router.get("/details/data")
+def show_details(card_uid: str, time_range: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if time_range == "day":
+        since = datetime.now() - timedelta(days=1)
+    elif time_range == "week":
+        since = datetime.now() - timedelta(days=7)
+    elif time_range == "month":
+        since = datetime.now() - timedelta(days=30)
+    else:
+        return {"error": "invalid range"}
+
+    cursor.execute("""
+        SELECT card_uid, description, is_active, created_at
+        FROM cards
+        WHERE card_uid = ?
+    """, (card_uid,))
+    tag_row = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT event_time, event_type
+        FROM events e
+        JOIN cards c on e.card_id = c.id
+        WHERE c.card_uid = ? AND e.event_time >= ?
+    """, (card_uid, since))
+    event_rows = cursor.fetchall()
+
+    return {
+        "tag": tag_row,
+        "events": event_rows
+    }
+    
+
+
+    
+
+
+
+    
+
+
+
