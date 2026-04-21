@@ -1,0 +1,50 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    color: #e2e8f0;
+}
+
+.layout {
+    display: flex;
+    height: 100vh;
+}
+
+.panel {
+    flex: 1;
+    padding: 20px;
+    border-right: 1px solid #1e293b;
+    overflow-y: auto;
+}
+
+.panel:last-child {
+    border-right: none;
+}
+
+h2 {
+    margin-top: 0;
+    font-size: 20px;
+    color: black;
+}
+
+.card {
+    background: #1e293b;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 6px;
+}
+
+#content {
+    margin: 20px auto;
+    padding: 10px;
+    max-width: 600px;
+    font-family: Arial, sans-serif;
+}
+
+#content > div {
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid black;
+    border-radius: 4px;
+    color: black;
+    background-color: white;
+}
