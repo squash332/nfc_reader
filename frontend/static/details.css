@@ -41,6 +41,8 @@ h2 {
 
 #content {
     padding: 1vh;
+    width: flex;
+    position: flex;
 }
 
 .date-filter {

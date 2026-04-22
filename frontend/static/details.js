@@ -21,13 +21,14 @@ function renderDetails(data, range) {
     });
 }
 
-async function loadDetails(range) {
+async function loadDetails(range, startDate = null, endDate = null) {
     try {
 
-        const detailsRes = await fetch(`${apiUrl}?time_range=${range}`);
+        const detailsRes = await fetch(`${apiUrl}?time_range=${range}&start_date=${startDate}&end_date=${endDate}`);
         const detailsData = await detailsRes.json();
 
         renderDetails(detailsData, range);
+        document.querySelectorAll(".date-control-from, .date-control-to").forEach(input => input.value = ""); // reset date inputs
     } catch (err) {
         console.error("Error loading details:", err);
     }
@@ -39,4 +40,14 @@ window.onload = () => {
     document.getElementById("month-btn").addEventListener("click", () => loadDetails("month"));
     document.getElementById("week-btn").addEventListener("click", () => loadDetails("week"));
     document.getElementById("day-btn").addEventListener("click", () => loadDetails("day"));
-};
+    document.getElementById("get-data-btn").addEventListener("click", () => loadDetails("custom", document.querySelector(".date-control-from").value, document.querySelector(".date-control-to").value));
+    document.getElementById("search-user-input").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            const userName = e.target.value.trim();
+            if (userName) {
+                
+                e.target.value = "";
+            }
+        }
+    });
+}
