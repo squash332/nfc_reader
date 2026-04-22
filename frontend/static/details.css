@@ -33,15 +33,17 @@ h2 {
 }
 
 .card {
-    background: #1e293b;
     padding: 10px;
     margin: 8px 0;
-    border-radius: 6px;
+    border: 1px solid black;
+    border-radius: 4px;
+    color: black;
+    background-color: white;
 }
 
 #content {
     padding: 1vh;
-    width: flex;
+    width: 30%;
     position: flex;
 }
 
@@ -60,4 +62,8 @@ h2 {
 
 .controls {
     padding-bottom: 2vh;
+}
+
+.card-info {
+    margin-bottom: 2vh;
 }

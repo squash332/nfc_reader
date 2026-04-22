@@ -182,3 +182,37 @@ def show_details(time_range: str, start_date: str = None, end_date: str = None):
     event_rows = cursor.fetchall()
 
     return {"events": event_rows}
+
+@router.get("/tag/{full_name}")
+def get_user_tags(full_name: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT cards.card_uid, cards.description, cards.id, cards.user_id, cards.is_active, users.full_name
+    FROM cards
+    JOIN users ON cards.user_id = users.id
+    WHERE users.full_name = ?
+    """, (full_name,))
+
+
+    user_cards = cursor.fetchall()
+
+    if not user_cards:
+        conn.close()
+        return {"error": "No cards found for the user."}
+    conn.close()
+
+    return {
+        "tags": [
+            {
+                "card_uid": r["card_uid"],
+                "description": r["description"],
+                "id": r["id"],
+                "full_name": r["full_name"],
+                "user_id": r["user_id"],
+                "is_active": r["is_active"],
+            }
+            for r in user_cards
+        ]
+    }

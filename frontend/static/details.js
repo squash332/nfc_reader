@@ -1,4 +1,5 @@
 const apiUrl = 'http://127.0.0.1:8000/details/data';
+const tagApiUrl = 'http://127.0.0.1:8000/tag';  
 
 function renderDetails(data, range) {
     const container = document.getElementById("content");
@@ -21,6 +22,31 @@ function renderDetails(data, range) {
     });
 }
 
+function renderUserCards(cards) {
+    const container = document.getElementById("user-cards-container");
+    container.innerHTML = "";
+
+    if (!cards || cards.length === 0) {
+        container.textContent = "No cards found for this user.";
+        return;
+    }
+
+    const full_name = cards[0].full_name;
+    const name_header = document.createElement("h2");
+    name_header.textContent = `Full name: ${full_name}`;
+    container.appendChild(name_header);
+
+    cards.forEach(card => {
+
+        const div = document.createElement("div");
+        div.classList.add("card");
+        div.textContent = `${card.card_uid} | ${card.description}`;
+        container.appendChild(div);
+
+    });
+
+}
+
 async function loadDetails(range, startDate = null, endDate = null) {
     try {
 
@@ -31,6 +57,18 @@ async function loadDetails(range, startDate = null, endDate = null) {
         document.querySelectorAll(".date-control-from, .date-control-to").forEach(input => input.value = ""); // reset date inputs
     } catch (err) {
         console.error("Error loading details:", err);
+    }
+}
+
+async function searchByUser(full_name) {
+    try {
+        const searchRes = await fetch(`${tagApiUrl}/${encodeURIComponent(full_name)}`);
+        const searchData = await searchRes.json();
+        
+        renderUserCards(searchData.tags);
+        document.querySelector("#search-user-input").value = ""; 
+    } catch (err) {
+        console.error("Error searching by user:", err);
     }
 }
 
@@ -45,7 +83,7 @@ window.onload = () => {
         if (e.key === "Enter") {
             const userName = e.target.value.trim();
             if (userName) {
-                
+                searchByUser(userName)
                 e.target.value = "";
             }
         }
