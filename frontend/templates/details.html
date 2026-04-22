@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Details</title>
     <link rel="stylesheet" href="static/details.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 
 <body>
@@ -13,23 +14,31 @@
     <div class="layout">
 
         <div id="details-container" class="panel">
-            <h2>Entry details</h2>
+            <h1>Entry details</h1>
             <div class="controls">
-                <button id="week-btn">Week</button>
-                <button id="day-btn">Day</button>
-                <button id="month-btn">Month</button>
+                <button id="day-btn">Last 24 hours</button>
+                <button id="week-btn">Last 7 days</button>
+                <button id="month-btn">Last 30 days</button>
+
+                <div class="date-filter">
+                    <input type="datetime-local" class="date-control" placeholder="Select date">
+                </div>
 
             </div>
 
-            <!-- results -->
-            <div id="content">
-
-            </div>
         </div>
+
+        <!-- results -->
+        <div id="content">
+
+        </div>
+    </div>
 
     </div>
 
     <script type="module" src="static/details.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="../static/utils.js"></script>
 </body>
 
 </html>
