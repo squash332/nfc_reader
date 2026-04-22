@@ -123,7 +123,7 @@ def edit_tag(uid: str, data: UpdateTag):
     }
 
 @router.get("/details/data")
-def show_details(card_uid: str, time_range: str):
+def show_details(time_range: str):
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -137,22 +137,15 @@ def show_details(card_uid: str, time_range: str):
         return {"error": "invalid range"}
 
     cursor.execute("""
-        SELECT card_uid, description, is_active, created_at
-        FROM cards
-        WHERE card_uid = ?
-    """, (card_uid,))
-    tag_row = cursor.fetchone()
-
-    cursor.execute("""
-        SELECT event_time, event_type
+        SELECT e.event_time, e.event_type, c.card_uid, c.description
         FROM events e
         JOIN cards c on e.card_id = c.id
-        WHERE c.card_uid = ? AND e.event_time >= ?
-    """, (card_uid, since))
+        WHERE e.event_time >= ? 
+        ORDER BY e.event_time DESC
+    """, (since,))
     event_rows = cursor.fetchall()
 
     return {
-        "tag": tag_row,
         "events": event_rows
     }
     
