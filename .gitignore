@@ -7,3 +7,6 @@ managed_components/
 dependencies.lock
 .backend/env/
 backend/tags.json
+backend/database.db
+*.pyc
+backend/__pycache__/
