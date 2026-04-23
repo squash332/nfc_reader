@@ -8,8 +8,8 @@ export async function fetchTags() {
 
 let isEditing = false;
 // ui helper
-function showMessage(message, isError = false) {
-    const el = document.getElementById('message');
+export function showMessage(message, element, isError = false) {
+    const el = document.getElementById(`${element}`);
     el.textContent = message;
     el.style.color = isError ? 'red' : 'green';
     el.style.display = 'block';
@@ -85,7 +85,7 @@ async function loadTags() {
         renderTags(data.tags);
     } catch (err) {
         console.error(err);
-        showMessage("Failed to load tags", true);
+        showMessage("Failed to load tags", "message", true);
     }
 }
 
@@ -94,7 +94,7 @@ async function handleAdd() {
     const description = document.getElementById('card-description').value;
 
     if (!card_uid || !description) {
-        showMessage("Fields cannot be empty", true);
+        showMessage("Fields cannot be empty", "message", true);
         return;
     }
 
@@ -102,11 +102,11 @@ async function handleAdd() {
     const data = await res.json();
 
     if (data.status === 'ok') {
-        showMessage(`Tag '${card_uid}' added`);
+        showMessage(`Tag '${card_uid}' added`, "message", false);
     } else if (data.status === 'duplicate') {
-        showMessage(`Tag with UID '${card_uid}' already exists!` || "Error", true);
+        showMessage(`Tag with UID '${card_uid}' already exists!` || "Error", "message", true);
     } else {
-        showMessage(data.message || "Error", true);
+        showMessage(data.message || "Error", "message", true);
     }
     document.getElementById('card-uid').value = '';
     document.getElementById('card-description').value = '';
@@ -122,9 +122,9 @@ async function handleRemove(card_uid) {
     const data = await res.json();
 
     if (data.status === "removed") {
-        showMessage(`Tag '${card_uid}' removed`);
+        showMessage(`Tag '${card_uid}' removed`, "message", false);
     } else {
-        showMessage(data.message || "Error", true);
+        showMessage(data.message || "Error", "message", true);
     }
 
     loadTags();
@@ -180,7 +180,7 @@ async function handleSave(card_uid, newDescription, cardActiveState) {
     const data = await res.json();
 
     if (data.status === "ok") {
-        showMessage(`Tag '${card_uid}' edited`);
+        showMessage(`Tag '${card_uid}' edited`, "message", false);
         loadTags();
     }
 }

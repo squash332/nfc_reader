@@ -192,8 +192,8 @@ def get_user_tags(full_name: str):
     SELECT cards.card_uid, cards.description, cards.id, cards.user_id, cards.is_active, users.full_name
     FROM cards
     JOIN users ON cards.user_id = users.id
-    WHERE users.full_name = ?
-    """, (full_name,))
+    WHERE users.full_name LIKE ?
+    """, (f"%{full_name}%",))
 
 
     user_cards = cursor.fetchall()
