@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 import os
+from typing import Optional
 
 from database import get_connection
 from models import Tag, UpdateTag
@@ -171,9 +172,10 @@ def show_details(time_range: str, start_date: str = None, end_date: str = None):
 
     cursor.execute(
         """
-        SELECT e.event_time, e.event_type, c.card_uid, c.description
+        SELECT e.event_time, e.event_type, c.card_uid, c.description, u.full_name
         FROM events e
         JOIN cards c on e.card_id = c.id
+        JOIN users u on c.user_id = u.id
         WHERE e.event_time >= ? AND e.event_time < ?
         ORDER BY e.event_time DESC
     """,
@@ -216,3 +218,39 @@ def get_user_tags(full_name: str):
             for r in user_cards
         ]
     }
+
+@router.get("/details/data/events/{event_type}")
+def get_events_by_type(event_type: Optional[str] = None):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if event_type == "both":
+        cursor.execute("""
+        SELECT e.event_time, e.event_type, c.card_uid, u.full_name
+        FROM events e
+        JOIN cards c on e.card_id = c.id
+        JOIN users u on c.user_id = u.id
+        ORDER BY e.event_time DESC
+        """)
+    else:
+        cursor.execute("""
+        SELECT e.event_time, e.event_type, c.card_uid, u.full_name
+        FROM events e
+        JOIN cards c on e.card_id = c.id
+        JOIN users u on c.user_id = u.id
+        WHERE e.event_type = ?
+        ORDER BY e.event_time DESC
+        """, (event_type,))
+
+    events = [
+        {
+            "event_time": row[0],
+            "event_type": row[1],
+            "card_uid": row[2],
+            "full_name": row[3],
+        }
+        for row in cursor.fetchall()
+    ]
+
+    conn.close()
+    return {"events": events}

@@ -10,15 +10,28 @@ function renderDetails(data, range) {
         showMessage("No data found.", "content", true);
         return;
     }
-
+    console.log(range);
     const header = document.createElement("h2");
+    if (range === "custom") {
+        const start = document.querySelector(".date-control-from").value;
+        const end = document.querySelector(".date-control-to").value;
+
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+
+        const options = { year: "numeric", month: "short", day: "numeric" };
+
+        const startFormatted = startDate.toLocaleDateString(undefined, options);
+        const endFormatted = endDate.toLocaleDateString(undefined, options);
+        range = `${startFormatted} to ${endFormatted}`;
+    }
     header.textContent = `Logs - ${range}`;
     container.appendChild(header);
 
     data.events.forEach(e => {
         const div = document.createElement("div");
         let displayTime = range === "day" ? e.event_time : e.event_time.split("T")[0];
-        div.textContent = `${e.card_uid} | ${e.description} | ${displayTime} | ${e.event_type}`;
+        div.textContent = `${e.full_name} | ${e.description} | ${displayTime} | ${e.event_type}`;
         container.appendChild(div);
     });
 }
@@ -61,13 +74,57 @@ function renderUserCards(cards) {
     });
 }
 
+function renderTypeDetails(data, event_type) {
+    const container = document.getElementById("content");
+    const oldHeader = container.querySelector("h2");
+    container.innerHTML = "";
+
+    if (!data.events || data.events.length === 0) {
+        showMessage("No data found for this event type.", "content", true);
+        return;
+    }
+
+    const filteredEvents = data.events.filter(e => {
+        return event_type === "both" || e.event_type === event_type;
+    });
+
+    if (filteredEvents.length === 0) {
+        showMessage("No matching events for selected type.", "content", true);
+        return;
+    }
+
+    const nameHeader = document.createElement("h2");
+    nameHeader.textContent = oldHeader.textContent;
+    container.appendChild(nameHeader);
+
+    filteredEvents.forEach(e => {
+        const div = document.createElement("div");
+        div.textContent = `${e.full_name} | ${e.event_time} | ${e.event_type}`;
+        container.appendChild(div);
+    });
+
+}
+
 async function loadDetails(range, startDate = null, endDate = null) {
     try {
 
         const detailsRes = await fetch(`${apiUrl}?time_range=${range}&start_date=${startDate}&end_date=${endDate}`);
         const detailsData = await detailsRes.json();
 
-        renderDetails(detailsData, range);
+        let displayRange;
+        if (range === "custom") {
+            const start = document.querySelector(".date-control-from").value;
+            const end = document.querySelector(".date-control-to").value;
+            const startDateObj = new Date(start);
+            const endDateObj = new Date(end);
+            const options = { year: "numeric", month: "short", day: "numeric" };
+            displayRange = `${startDateObj.toLocaleDateString(undefined, options)} to ${endDateObj.toLocaleDateString(undefined, options)}`;
+        } else {
+            const btn = document.querySelector(`#${range}-btn`);
+            displayRange = btn ? btn.textContent : range;
+        };
+
+        renderDetails(detailsData, displayRange);
         document.querySelectorAll(".date-control-from, .date-control-to").forEach(input => input.value = ""); // reset date inputs
     } catch (err) {
         console.error("Error loading details:", err);
@@ -86,6 +143,18 @@ async function searchByUser(full_name) {
     }
 }
 
+async function loadType(event_type) {
+    try {
+        const typeRes = await fetch(`${apiUrl}/events/${encodeURIComponent(event_type)}`);
+        const typeData = await typeRes.json();
+        console.log("loadType console log:", typeData);
+        renderTypeDetails(typeData, event_type);
+    }
+    catch (err) {
+        console.error("Error loading by event type:", err);
+    }
+}
+
 window.onload = () => {
     loadDetails("month");
 
@@ -100,6 +169,14 @@ window.onload = () => {
                 searchByUser(userName)
                 e.target.value = "";
             }
+        }
+    });
+
+    document.getElementById("event-type-select").addEventListener("change", (e) => {
+        const selectedType = e.target.value;
+        if (selectedType) {
+            console.log(`Selected event type: ${selectedType}`);
+            loadType(selectedType);
         }
     });
 }
