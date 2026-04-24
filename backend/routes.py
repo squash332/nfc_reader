@@ -144,7 +144,12 @@ def edit_tag(uid: str, data: UpdateTag):
 
 
 @router.get("/details/data")
-def show_details(time_range: str, start_date: str = None, end_date: str = None):
+def show_details(
+    time_range: str,
+    start_date: str = None,
+    end_date: str = None,
+    event_type: Optional[str] = None,
+):
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -170,17 +175,24 @@ def show_details(time_range: str, start_date: str = None, end_date: str = None):
     else:
         return {"error": "invalid range"}
 
-    cursor.execute(
-        """
+    # base query
+    query = """
         SELECT e.event_time, e.event_type, c.card_uid, c.description, u.full_name
         FROM events e
         JOIN cards c on e.card_id = c.id
         JOIN users u on c.user_id = u.id
         WHERE e.event_time >= ? AND e.event_time < ?
-        ORDER BY e.event_time DESC
-    """,
-        (since, until),
-    )
+    """
+    params = [since, until]
+
+    # optional filter
+    if event_type in ("in", "out"):
+        query += " AND e.event_type = ?"
+        params.append(event_type)
+
+    query += " ORDER BY e.event_time DESC"
+
+    cursor.execute(query, params)
     event_rows = cursor.fetchall()
 
     return {"events": event_rows}
@@ -190,13 +202,15 @@ def get_user_tags(full_name: str):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
     SELECT cards.card_uid, cards.description, cards.id, cards.user_id, cards.is_active, users.full_name
     FROM cards
     JOIN users ON cards.user_id = users.id
     WHERE users.full_name LIKE ?
-    """, (f"%{full_name}%",))
-
+    """,
+        (f"%{full_name}%",),
+    )
 
     user_cards = cursor.fetchall()
 
@@ -219,38 +233,3 @@ def get_user_tags(full_name: str):
         ]
     }
 
-@router.get("/details/data/events/{event_type}")
-def get_events_by_type(event_type: Optional[str] = None):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    if event_type == "both":
-        cursor.execute("""
-        SELECT e.event_time, e.event_type, c.card_uid, u.full_name
-        FROM events e
-        JOIN cards c on e.card_id = c.id
-        JOIN users u on c.user_id = u.id
-        ORDER BY e.event_time DESC
-        """)
-    else:
-        cursor.execute("""
-        SELECT e.event_time, e.event_type, c.card_uid, u.full_name
-        FROM events e
-        JOIN cards c on e.card_id = c.id
-        JOIN users u on c.user_id = u.id
-        WHERE e.event_type = ?
-        ORDER BY e.event_time DESC
-        """, (event_type,))
-
-    events = [
-        {
-            "event_time": row[0],
-            "event_type": row[1],
-            "card_uid": row[2],
-            "full_name": row[3],
-        }
-        for row in cursor.fetchall()
-    ]
-
-    conn.close()
-    return {"events": events}

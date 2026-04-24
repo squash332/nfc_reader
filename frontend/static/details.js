@@ -2,6 +2,8 @@ import { showMessage } from './script.js';
 const apiUrl = 'http://127.0.0.1:8000/details/data';
 const tagApiUrl = 'http://127.0.0.1:8000/tag';
 
+let cachedEvents = [];
+
 function renderDetails(data, range) {
     const container = document.getElementById("content");
     container.innerHTML = "";
@@ -74,43 +76,15 @@ function renderUserCards(cards) {
     });
 }
 
-function renderTypeDetails(data, event_type) {
-    const container = document.getElementById("content");
-    const oldHeader = container.querySelector("h2");
-    container.innerHTML = "";
 
-    if (!data.events || data.events.length === 0) {
-        showMessage("No data found for this event type.", "content", true);
-        return;
-    }
 
-    const filteredEvents = data.events.filter(e => {
-        return event_type === "both" || e.event_type === event_type;
-    });
-
-    if (filteredEvents.length === 0) {
-        showMessage("No matching events for selected type.", "content", true);
-        return;
-    }
-
-    const nameHeader = document.createElement("h2");
-    nameHeader.textContent = oldHeader.textContent;
-    container.appendChild(nameHeader);
-
-    filteredEvents.forEach(e => {
-        const div = document.createElement("div");
-        div.textContent = `${e.full_name} | ${e.event_time} | ${e.event_type}`;
-        container.appendChild(div);
-    });
-
-}
-
-async function loadDetails(range, startDate = null, endDate = null) {
+async function loadDetails(range, startDate = null, endDate = null, event_type = null) {
     try {
 
-        const detailsRes = await fetch(`${apiUrl}?time_range=${range}&start_date=${startDate}&end_date=${endDate}`);
+        const detailsRes = await fetch(`${apiUrl}?time_range=${range}&start_date=${startDate}&end_date=${endDate}&event_type=${event_type}`);
         const detailsData = await detailsRes.json();
 
+        console.log("details data from load details:", detailsData);
         let displayRange;
         if (range === "custom") {
             const start = document.querySelector(".date-control-from").value;
@@ -123,8 +97,8 @@ async function loadDetails(range, startDate = null, endDate = null) {
             const btn = document.querySelector(`#${range}-btn`);
             displayRange = btn ? btn.textContent : range;
         };
-
-        renderDetails(detailsData, displayRange);
+        cachedEvents = detailsData.events || [];
+        renderDetails({events: cachedEvents}, displayRange);
         document.querySelectorAll(".date-control-from, .date-control-to").forEach(input => input.value = ""); // reset date inputs
     } catch (err) {
         console.error("Error loading details:", err);
@@ -140,18 +114,6 @@ async function searchByUser(full_name) {
         document.querySelector("#search-user-input").value = "";
     } catch (err) {
         console.error("Error searching by user:", err);
-    }
-}
-
-async function loadType(event_type) {
-    try {
-        const typeRes = await fetch(`${apiUrl}/events/${encodeURIComponent(event_type)}`);
-        const typeData = await typeRes.json();
-        console.log("loadType console log:", typeData);
-        renderTypeDetails(typeData, event_type);
-    }
-    catch (err) {
-        console.error("Error loading by event type:", err);
     }
 }
 
@@ -173,10 +135,16 @@ window.onload = () => {
     });
 
     document.getElementById("event-type-select").addEventListener("change", (e) => {
-        const selectedType = e.target.value;
-        if (selectedType) {
-            console.log(`Selected event type: ${selectedType}`);
-            loadType(selectedType);
-        }
-    });
+    const selectedType = e.target.value;
+    if (!selectedType) {
+        return;
+    }
+    if (selectedType === "") {
+        renderDetails({ events: cachedEvents }, "Both");
+    }
+    else {
+        const filtered = cachedEvents.filter(ev => ev.event_type === selectedType);
+        renderDetails({ events: filtered }, selectedType);
+    }
+});
 }
