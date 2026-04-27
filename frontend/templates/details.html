@@ -4,58 +4,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Details</title>
+    <title>Access Log — Entry Details</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="static/details.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 
 <body>
 
+    <!-- scanline overlay -->
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <!-- ── TOP NAV ── -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <span class="logo-icon">◈</span>
+            <div>
+                <div class="logo-title">SENTINEL</div>
+                <div class="logo-sub">Access Control System</div>
+            </div>
+        </div>
+        <nav class="topbar-nav">
+            <a href="/" class="nav-item">
+                <span class="nav-icon">⊞</span> Tag Manager
+            </a>
+            <span class="nav-item active">
+                <span class="nav-icon">◧</span> Access Log
+            </span>
+        </nav>
+        <div class="topbar-status">
+            <span class="status-dot"></span>
+            <span class="status-text">LIVE</span>
+        </div>
+    </header>
+
     <div class="layout">
 
-        <div id="details-container" class="panel">
-            <h1>Entry details</h1>
-            <div class="controls">
-                <button id="day-btn">Last 24 hours</button>
-                <button id="week-btn">Last 7 days</button>
-                <button id="month-btn">Last 30 days</button>
-                <label for="event-type-select" id="filter-label">Filter events:</label>
-                <select name="event-type-select" id="event-type-select">
-                    <option id="both-option" value="">Both</option>
-                    <option id="entry-option" value="in">Entry</option>
-                    <option id="exit-option" value="out">Exit</option>
-                </select>
+        <!-- ── SIDEBAR ── -->
+        <aside class="sidebar">
 
-                <div class="date-filter">
-                    <h2>Custom date range:</h2>
-                    <input type="datetime-local" class="date-control-from" placeholder="Select start date">
-                    <input type="datetime-local" class="date-control-to" placeholder="Select end date">
-                    <button id="get-data-btn">Get Data</button>
+            <nav class="sidebar-section">
+                <div class="section-label">TIME RANGE</div>
+                <div class="range-buttons">
+                    <button class="range-btn" id="day-btn" data-range="day">
+                        <span class="btn-icon">◷</span>Last 24 hours
+                    </button>
+                    <button class="range-btn" id="week-btn" data-range="week">
+                        <span class="btn-icon">◷</span>Last 7 days
+                    </button>
+                    <button class="range-btn active" id="month-btn" data-range="month">
+                        <span class="btn-icon">◷</span>Last 30 days
+                    </button>
                 </div>
+            </nav>
 
-            </div>
-            <div class="card-info">
-                <h2>Search cards via user</h2>
-                <input type="text" id="search-user-input" placeholder="Enter user name">
-            </div>
-            <div class="user-info">
-                <div id="user-cards-container">
+            <div class="sidebar-section">
+                <div class="section-label">EVENT FILTER</div>
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-type="">ALL</button>
+                    <button class="filter-tab entry" data-type="in">ENTRY</button>
+                    <button class="filter-tab exit" data-type="out">EXIT</button>
                 </div>
             </div>
 
-        </div>
+            <div class="sidebar-section">
+                <div class="section-label">CUSTOM RANGE</div>
+                <div class="date-inputs">
+                    <div class="date-field">
+                        <label class="date-label">FROM</label>
+                        <input type="text" class="date-control date-control-from" placeholder="Select date & time" readonly>
+                    </div>
+                    <div class="date-field">
+                        <label class="date-label">TO</label>
+                        <input type="text" class="date-control date-control-to" placeholder="Select date & time" readonly>
+                    </div>
+                    <button id="get-data-btn" class="primary-btn">
+                        <span>▶</span> QUERY LOGS
+                    </button>
+                </div>
+            </div>
 
-        <!-- results -->
-        <div id="content">
+            <div class="sidebar-section">
+                <div class="section-label">CARD LOOKUP</div>
+                <div class="search-wrap">
+                    <input type="text" id="search-user-input" class="search-input" placeholder="Search by user name…" autocomplete="off">
+                    <span class="search-icon">⌕</span>
+                </div>
+                <div id="user-cards-container"></div>
+            </div>
 
-        </div>
-    </div>
+        </aside>
+
+        <!-- ── MAIN LOG PANEL ── -->
+        <main class="main-panel">
+
+            <header class="log-header">
+                <div class="log-title-group">
+                    <h1 class="log-title">ACCESS LOG</h1>
+                    <div class="log-subtitle" id="log-range-label">Last 30 days</div>
+                </div>
+                <div class="log-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">ENTRIES</span>
+                        <span class="meta-value" id="count-in">—</span>
+                    </div>
+                    <div class="meta-divider"></div>
+                    <div class="meta-item">
+                        <span class="meta-label">EXITS</span>
+                        <span class="meta-value" id="count-out">—</span>
+                    </div>
+                    <div class="meta-divider"></div>
+                    <div class="meta-item">
+                        <span class="meta-label">TOTAL</span>
+                        <span class="meta-value" id="count-total">—</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- column headers -->
+            <div class="log-columns">
+                <span>TIMESTAMP</span>
+                <span>USER</span>
+                <span>CARD</span>
+                <span>EVENT</span>
+            </div>
+
+            <!-- log rows injected here -->
+            <div id="content" class="log-body">
+                <div class="loading-state">
+                    <span class="loading-spinner">◌</span>
+                    <span>Loading records…</span>
+                </div>
+            </div>
+
+        </main>
 
     </div>
 
     <script type="module" src="static/details.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="../static/utils.js"></script>
 </body>
-
 </html>

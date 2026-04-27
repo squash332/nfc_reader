@@ -1,150 +1,265 @@
-import { showMessage } from './script.js';
-const apiUrl = 'http://127.0.0.1:8000/details/data';
+const apiUrl    = 'http://127.0.0.1:8000/details/data';
 const tagApiUrl = 'http://127.0.0.1:8000/tag';
 
-let cachedEvents = [];
+let cachedEvents    = [];
+let activeRange     = 'month';
+let activeEventType = '';
 
-function renderDetails(data, range) {
-    const container = document.getElementById("content");
-    container.innerHTML = "";
 
-    if (!data.events || data.events.length === 0) {
-        showMessage("No data found.", "content", true);
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+
+function formatTimestamp(raw) {
+    // Handles both "2025-01-15T14:32:00" and "2025-01-15 14:32:00"
+    const dt = new Date(raw.replace(' ', 'T'));
+    if (isNaN(dt)) return { date: '', time: raw };
+    const date = dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const time = dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return { date, time };
+}
+
+function setRangeLabel(label) {
+    const el = document.getElementById('log-range-label');
+    if (el) el.textContent = label;
+}
+
+function updateCounts(events) {
+    const total = events.length;
+    const inCount  = events.filter(e => e.event_type === 'in').length;
+    const outCount = events.filter(e => e.event_type === 'out').length;
+
+    document.getElementById('count-total').textContent = total;
+    document.getElementById('count-in').textContent    = inCount;
+    document.getElementById('count-out').textContent   = outCount;
+}
+
+
+// ── RENDER LOG ROWS ───────────────────────────────────────────────────────────
+
+function renderDetails(events) {
+    const container = document.getElementById('content');
+    container.innerHTML = '';
+
+    if (!events || events.length === 0) {
+        container.innerHTML = `<div class="empty-state"><span>◌</span><span>No records found for this range.</span></div>`;
+        updateCounts([]);
         return;
     }
-    console.log(range);
-    const header = document.createElement("h2");
-    if (range === "custom") {
-        const start = document.querySelector(".date-control-from").value;
-        const end = document.querySelector(".date-control-to").value;
 
-        const startDate = new Date(start);
-        const endDate = new Date(end);
+    updateCounts(events);
 
-        const options = { year: "numeric", month: "short", day: "numeric" };
+    events.forEach((e, i) => {
+        const { date, time } = formatTimestamp(e.event_time);
+        const isIn = e.event_type === 'in';
 
-        const startFormatted = startDate.toLocaleDateString(undefined, options);
-        const endFormatted = endDate.toLocaleDateString(undefined, options);
-        range = `${startFormatted} to ${endFormatted}`;
-    }
-    header.textContent = `Logs - ${range}`;
-    container.appendChild(header);
+        const row = document.createElement('div');
+        row.className = `log-row event-${e.event_type}`;
+        row.style.animationDelay = `${Math.min(i * 20, 400)}ms`;
 
-    data.events.forEach(e => {
-        const div = document.createElement("div");
-        let displayTime = range === "day" ? e.event_time : e.event_time.split("T")[0];
-        div.textContent = `${e.full_name} | ${e.description} | ${displayTime} | ${e.event_type}`;
-        container.appendChild(div);
+        row.innerHTML = `
+            <div class="log-timestamp">
+                <span class="date-part">${date}</span>${time}
+            </div>
+            <div class="log-user">${e.full_name ?? '—'}</div>
+            <div class="log-card" title="${e.card_uid ?? ''}">${e.description ?? e.card_uid ?? '—'}</div>
+            <div>
+                <span class="log-badge ${isIn ? 'badge-in' : 'badge-out'}">
+                    <span class="badge-dot"></span>
+                    ${isIn ? 'ENTRY' : 'EXIT'}
+                </span>
+            </div>
+        `;
+
+        container.appendChild(row);
     });
 }
 
+
+// ── RENDER USER CARD LOOKUP ───────────────────────────────────────────────────
+
 function renderUserCards(cards) {
-    const container = document.getElementById("user-cards-container");
-    container.innerHTML = "";
+    const container = document.getElementById('user-cards-container');
+    container.innerHTML = '';
 
     if (!cards || cards.length === 0) {
-        showMessage("No cards found for this user.", "user-cards-container", true);
+        container.innerHTML = `<div class="inline-error">No cards found for this user.</div>`;
         return;
     }
 
+    // group by user
     const grouped = {};
-
     cards.forEach(card => {
-        const key = card.user_id; // 
-
-        if (!grouped[key]) {
-            grouped[key] = {
-                full_name: card.full_name,
-                cards: []
-            };
+        if (!grouped[card.user_id]) {
+            grouped[card.user_id] = { full_name: card.full_name, cards: [] };
         }
-
-        grouped[key].cards.push(card);
+        grouped[card.user_id].cards.push(card);
     });
 
     Object.values(grouped).forEach(group => {
-        const nameHeader = document.createElement("h2");
-        nameHeader.textContent = `Full name: ${group.full_name}`;
-        container.appendChild(nameHeader);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'user-group';
+
+        const nameHeader = document.createElement('h2');
+        nameHeader.textContent = group.full_name;
+        wrapper.appendChild(nameHeader);
 
         group.cards.forEach(card => {
-            const div = document.createElement("div");
-            div.classList.add("card");
-            div.textContent = `${card.card_uid} | ${card.description}`;
-            container.appendChild(div);
+            const item = document.createElement('div');
+            item.className = 'user-card-item';
+            const status = card.is_active ? 'ACTIVE' : 'INACTIVE';
+            item.innerHTML = `<span class="card-uid">${card.card_uid}</span><br>${card.description ?? '—'} · ${status}`;
+            wrapper.appendChild(item);
         });
+
+        container.appendChild(wrapper);
     });
 }
 
 
+// ── DATA LOADING ──────────────────────────────────────────────────────────────
 
-async function loadDetails(range, startDate = null, endDate = null, event_type = null) {
+async function loadDetails(range, startDate = null, endDate = null) {
+    const container = document.getElementById('content');
+    container.innerHTML = `<div class="loading-state"><span class="loading-spinner">◌</span><span>Querying records…</span></div>`;
+
     try {
+        const params = new URLSearchParams({ time_range: range });
+        if (startDate) params.append('start_date', startDate);
+        if (endDate)   params.append('end_date',   endDate);
+        if (activeEventType) params.append('event_type', activeEventType);
 
-        const detailsRes = await fetch(`${apiUrl}?time_range=${range}&start_date=${startDate}&end_date=${endDate}&event_type=${event_type}`);
-        const detailsData = await detailsRes.json();
+        const res  = await fetch(`${apiUrl}?${params}`);
+        const data = await res.json();
 
-        console.log("details data from load details:", detailsData);
-        let displayRange;
-        if (range === "custom") {
-            const start = document.querySelector(".date-control-from").value;
-            const end = document.querySelector(".date-control-to").value;
-            const startDateObj = new Date(start);
-            const endDateObj = new Date(end);
-            const options = { year: "numeric", month: "short", day: "numeric" };
-            displayRange = `${startDateObj.toLocaleDateString(undefined, options)} to ${endDateObj.toLocaleDateString(undefined, options)}`;
-        } else {
-            const btn = document.querySelector(`#${range}-btn`);
-            displayRange = btn ? btn.textContent : range;
-        };
-        cachedEvents = detailsData.events || [];
-        renderDetails({events: cachedEvents}, displayRange);
-        document.querySelectorAll(".date-control-from, .date-control-to").forEach(input => input.value = ""); // reset date inputs
+        if (data.error) {
+            container.innerHTML = `<div class="empty-state"><span class="inline-error">${data.error}</span></div>`;
+            return;
+        }
+
+        cachedEvents = data.events || [];
+        renderDetails(cachedEvents);
+
     } catch (err) {
-        console.error("Error loading details:", err);
+        console.error('Error loading details:', err);
+        container.innerHTML = `<div class="empty-state"><span class="inline-error">Failed to connect to server.</span></div>`;
     }
 }
 
 async function searchByUser(full_name) {
     try {
-        const searchRes = await fetch(`${tagApiUrl}/${encodeURIComponent(full_name)}`);
-        const searchData = await searchRes.json();
-        console.log(searchData);
-        renderUserCards(searchData.tags);
-        document.querySelector("#search-user-input").value = "";
+        const res  = await fetch(`${tagApiUrl}/${encodeURIComponent(full_name)}`);
+        const data = await res.json();
+        renderUserCards(data.tags);
     } catch (err) {
-        console.error("Error searching by user:", err);
+        console.error('Error searching by user:', err);
     }
 }
 
-window.onload = () => {
-    loadDetails("month");
 
-    document.getElementById("month-btn").addEventListener("click", () => loadDetails("month"));
-    document.getElementById("week-btn").addEventListener("click", () => loadDetails("week"));
-    document.getElementById("day-btn").addEventListener("click", () => loadDetails("day"));
-    document.getElementById("get-data-btn").addEventListener("click", () => loadDetails("custom", document.querySelector(".date-control-from").value, document.querySelector(".date-control-to").value));
-    document.getElementById("search-user-input").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            const userName = e.target.value.trim();
-            if (userName) {
-                searchByUser(userName)
-                e.target.value = "";
+// ── RANGE BUTTON STATE ────────────────────────────────────────────────────────
+
+function setActiveRange(id, labelText) {
+    document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById(id);
+    if (btn) btn.classList.add('active');
+    setRangeLabel(labelText);
+}
+
+
+// ── FILTER TABS STATE ─────────────────────────────────────────────────────────
+
+function applyEventFilter(type) {
+    activeEventType = type;
+
+    // re-filter cached events for instant response; re-fetch respects filter too
+    const filtered = type ? cachedEvents.filter(e => e.event_type === type) : cachedEvents;
+    renderDetails(filtered);
+}
+
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+
+window.onload = () => {
+    // Flatpickr — altInput: true hides the original input and shows a pretty one.
+    // The original input (.date-control-from / .date-control-to) still receives
+    // the value in dateFormat ("Y-m-d H:i"), which is exactly what the backend expects.
+    const fpConfig = {
+        enableTime: true,
+        dateFormat: 'Y-m-d H:i',
+        altInput:   true,
+        altFormat:  'F j, Y (h:i K)',
+        time_24hr:  false,
+    };
+    flatpickr('.date-control-from', fpConfig);
+    flatpickr('.date-control-to',   fpConfig);
+
+    // initial load
+    loadDetails('month');
+    setRangeLabel('Last 30 days');
+
+    // range buttons
+    document.getElementById('day-btn').addEventListener('click', () => {
+        activeRange = 'day';
+        setActiveRange('day-btn', 'Last 24 hours');
+        loadDetails('day');
+    });
+
+    document.getElementById('week-btn').addEventListener('click', () => {
+        activeRange = 'week';
+        setActiveRange('week-btn', 'Last 7 days');
+        loadDetails('week');
+    });
+
+    document.getElementById('month-btn').addEventListener('click', () => {
+        activeRange = 'month';
+        setActiveRange('month-btn', 'Last 30 days');
+        loadDetails('month');
+    });
+
+    // custom date range
+    document.getElementById('get-data-btn').addEventListener('click', () => {
+        // Flatpickr writes the dateFormat value to the original (hidden) input.
+        // The altInput is only for display — always read from the original.
+        const from = document.querySelector('.date-control-from').value;
+        const to   = document.querySelector('.date-control-to').value;
+
+        if (!from || !to) {
+            // visually hint the empty fields instead of an alert
+            ['.date-control-from', '.date-control-to'].forEach(sel => {
+                const altEl = document.querySelector(`${sel} + input`); // Flatpickr's altInput sibling
+                const target = altEl || document.querySelector(sel);
+                target.style.borderColor = 'var(--red)';
+                setTimeout(() => target.style.borderColor = '', 1500);
+            });
+            return;
+        }
+
+        activeRange = 'custom';
+        // from/to are already "YYYY-MM-DD HH:MM" — exactly what the backend strptime expects
+        const [fromDate, toDate] = [new Date(from), new Date(to)];
+        const opts = { day: 'numeric', month: 'short', year: 'numeric' };
+        setRangeLabel(`${fromDate.toLocaleDateString(undefined, opts)} → ${toDate.toLocaleDateString(undefined, opts)}`);
+        loadDetails('custom', from, to);
+
+        document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+    });
+
+    // event type filter tabs
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            applyEventFilter(tab.dataset.type);
+        });
+    });
+
+    // user search on Enter
+    document.getElementById('search-user-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            const name = e.target.value.trim();
+            if (name) {
+                searchByUser(name);
+                e.target.value = '';
             }
         }
     });
-
-    document.getElementById("event-type-select").addEventListener("change", (e) => {
-    const selectedType = e.target.value;
-    if (!selectedType) {
-        return;
-    }
-    if (selectedType === "") {
-        renderDetails({ events: cachedEvents }, "Both");
-    }
-    else {
-        const filtered = cachedEvents.filter(ev => ev.event_type === selectedType);
-        renderDetails({ events: filtered }, selectedType);
-    }
-});
-}
+};

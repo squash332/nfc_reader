@@ -1,22 +1,11 @@
 const apiUrl = 'http://127.0.0.1:8000/tag';
 
+// ── API ───────────────────────────────────────────────────────────────────────
+
 export async function fetchTags() {
     const res = await fetch(apiUrl);
     return res.json();
 }
-
-
-let isEditing = false;
-// ui helper
-export function showMessage(message, element, isError = false) {
-    const el = document.getElementById(`${element}`);
-    el.textContent = message;
-    el.style.color = isError ? 'red' : 'green';
-    el.style.display = 'block';
-}
-
-
-// api
 
 async function createTag(card_uid, description) {
     return fetch(apiUrl, {
@@ -27,9 +16,7 @@ async function createTag(card_uid, description) {
 }
 
 async function deleteTag(card_uid) {
-    return fetch(`${apiUrl}/${card_uid}`, {
-        method: 'DELETE'
-    });
+    return fetch(`${apiUrl}/${card_uid}`, { method: 'DELETE' });
 }
 
 async function updateTag(card_uid, description, is_active) {
@@ -40,153 +27,199 @@ async function updateTag(card_uid, description, is_active) {
     });
 }
 
-// render
-function createTagElement(tag) {
-    const card_uid = tag.card_uid;
 
+// ── UI HELPERS ────────────────────────────────────────────────────────────────
+
+export function showMessage(text, isError = false) {
+    const el = document.getElementById('message');
+    el.textContent = text;
+    el.className = 'message ' + (isError ? 'error' : 'success');
+    clearTimeout(el._timeout);
+    el._timeout = setTimeout(() => {
+        el.className = 'message';
+        el.textContent = '';
+    }, 3500);
+}
+
+function setScanZone(state, label) {
+    // state: '' | 'success' | 'error'
+    const zone = document.getElementById('scan-zone');
+    const labelEl = zone.querySelector('.scan-label');
+    zone.className = 'scan-zone' + (state ? ' ' + state : '');
+    labelEl.textContent = label;
+    if (state) {
+        clearTimeout(zone._timeout);
+        zone._timeout = setTimeout(() => {
+            zone.className = 'scan-zone';
+            labelEl.textContent = 'RFID READY';
+        }, 2000);
+    }
+}
+
+function updateCardCount(tags) {
+    const el = document.getElementById('card-count');
+    const active = tags.filter(t => t.is_active).length;
+    el.textContent = `${tags.length} card${tags.length !== 1 ? 's' : ''} registered — ${active} active`;
+}
+
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+
+function createCardElement(tag, index) {
     const li = document.createElement('li');
-    li.id = `tag-${card_uid}`;
+    li.id = `tag-${tag.card_uid}`;
+    li.className = `card-item ${tag.is_active ? 'is-active' : 'is-inactive'}`;
+    li.style.animationDelay = `${Math.min(index * 30, 300)}ms`;
 
-    const text = document.createElement('span');
-    text.textContent = `${card_uid} | ${tag.description ?? ""} | ${tag.is_active ?? ""}`;
+    const isActive = Boolean(tag.is_active);
 
-    const btnWrap = document.createElement('div');
+    li.innerHTML = `
+        <div class="card-uid" title="${tag.card_uid}">${tag.card_uid}</div>
+        <div class="card-desc" title="${tag.description ?? ''}">${tag.description ?? '—'}</div>
+        <div>
+            <span class="card-status-badge ${isActive ? 'badge-active' : 'badge-inactive'}">
+                <span class="badge-dot"></span>
+                ${isActive ? 'ACTIVE' : 'INACTIVE'}
+            </span>
+        </div>
+        <div class="card-actions">
+            <button class="action-btn edit">EDIT</button>
+            <button class="action-btn remove">REMOVE</button>
+        </div>
+    `;
 
-    const removeBtn = document.createElement('button');
-    removeBtn.textContent = "Remove";
-    removeBtn.onclick = () => handleRemove(tag.card_uid);
-
-    const editBtn = document.createElement('button');
-    editBtn.textContent = "Edit";
-    editBtn.onclick = () => enterEditMode(tag);
-
-    btnWrap.appendChild(removeBtn);
-    btnWrap.appendChild(editBtn);
-
-    li.appendChild(text);
-    li.appendChild(btnWrap);
+    li.querySelector('.remove').onclick = () => handleRemove(tag.card_uid);
+    li.querySelector('.edit').onclick   = () => enterEditMode(tag);
 
     return li;
 }
 
 function renderTags(tags) {
     const list = document.getElementById('card-list');
+    const emptyState = document.getElementById('empty-state');
     list.innerHTML = '';
 
-    tags.forEach(tag => {
-        list.appendChild(createTagElement(tag));
-    });
+    if (!tags || tags.length === 0) {
+        emptyState.style.display = 'flex';
+        updateCardCount([]);
+        return;
+    }
+
+    emptyState.style.display = 'none';
+    updateCardCount(tags);
+    tags.forEach((tag, i) => list.appendChild(createCardElement(tag, i)));
 }
 
-// actions
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
+
 async function loadTags() {
     try {
         const data = await fetchTags();
         renderTags(data.tags);
     } catch (err) {
         console.error(err);
-        showMessage("Failed to load tags", "message", true);
+        showMessage('Failed to load cards.', true);
     }
 }
 
 async function handleAdd() {
-    const card_uid = document.getElementById('card-uid').value;
-    const description = document.getElementById('card-description').value;
+    const uidInput  = document.getElementById('card-uid');
+    const descInput = document.getElementById('card-description');
+    const card_uid  = uidInput.value.trim();
+    const desc      = descInput.value.trim();
 
-    if (!card_uid || !description) {
-        showMessage("Fields cannot be empty", "message", true);
+    if (!card_uid || !desc) {
+        showMessage('Both UID and description are required.', true);
+        setScanZone('error', 'MISSING DATA');
         return;
     }
 
-    const res = await createTag(card_uid, description);
+    const res  = await createTag(card_uid, desc);
     const data = await res.json();
 
     if (data.status === 'ok') {
-        showMessage(`Tag '${card_uid}' added`, "message", false);
+        showMessage(`Card '${card_uid}' registered.`);
+        setScanZone('success', 'REGISTERED');
+        uidInput.value  = '';
+        descInput.value = '';
     } else if (data.status === 'duplicate') {
-        showMessage(`Tag with UID '${card_uid}' already exists!` || "Error", "message", true);
+        showMessage(`UID '${card_uid}' already exists.`, true);
+        setScanZone('error', 'DUPLICATE UID');
     } else {
-        showMessage(data.message || "Error", "message", true);
+        showMessage(data.message || 'Unknown error.', true);
+        setScanZone('error', 'ERROR');
     }
-    document.getElementById('card-uid').value = '';
-    document.getElementById('card-description').value = '';
-    loadTags();
-}
 
-function goToDetails() {
-    window.location.href = "/details";
+    loadTags();
 }
 
 async function handleRemove(card_uid) {
-    const res = await deleteTag(card_uid);
+    const res  = await deleteTag(card_uid);
     const data = await res.json();
 
-    if (data.status === "removed") {
-        showMessage(`Tag '${card_uid}' removed`, "message", false);
+    if (data.status === 'removed') {
+        showMessage(`Card '${card_uid}' removed.`);
     } else {
-        showMessage(data.message || "Error", "message", true);
+        showMessage(data.message || 'Error removing card.', true);
     }
 
     loadTags();
 }
 
-// edit
+
+// ── EDIT MODE ─────────────────────────────────────────────────────────────────
+
 function enterEditMode(tag) {
-    isEditing = true;
+    const li = document.getElementById(`tag-${tag.card_uid}`);
+    li.className = 'card-item editing';
+    li.innerHTML = `
+        <div class="edit-form">
+            <span class="edit-uid-label">${tag.card_uid}</span>
+            <input class="edit-input" type="text" placeholder="New description" value="">
+            <select class="edit-select">
+                <option value="1" ${tag.is_active ? 'selected' : ''}>ACTIVE</option>
+                <option value="0" ${!tag.is_active ? 'selected' : ''}>INACTIVE</option>
+            </select>
+            <button class="edit-save">SAVE</button>
+            <button class="edit-cancel">CANCEL</button>
+        </div>
+    `;
 
-    const card_uid = tag.card_uid;
-
-    const li = document.getElementById(`tag-${card_uid}`);
-    li.innerHTML = '';
-
-    const newDescription = document.createElement('input');
-    newDescription.type = "text";
-    newDescription.value = "";
-    newDescription.placeholder = "Enter a new card description";
-
-    const cardActiveState = document.createElement('select');
-    const optionActive = document.createElement('option');
-    optionActive.value = 1;
-    optionActive.textContent = "Active";
-
-    const optionInactive = document.createElement('option');
-    optionInactive.value = 0;
-    optionInactive.textContent = "Inactive";
-
-    cardActiveState.appendChild(optionActive);
-    cardActiveState.appendChild(optionInactive);
-    cardActiveState.value = tag.is_active ?? 1;
-
-    const saveBtn = document.createElement('button');
-    saveBtn.textContent = "Save";
-    saveBtn.onclick = () => handleSave(card_uid, newDescription.value, cardActiveState.value);
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.textContent = "Cancel";
-    cancelBtn.onclick = () => {
-        isEditing = false;
-        loadTags();
+    li.querySelector('.edit-save').onclick = () => {
+        const desc    = li.querySelector('.edit-input').value.trim();
+        const active  = parseInt(li.querySelector('.edit-select').value, 10);
+        handleSave(tag.card_uid, desc, active);
     };
 
-    li.appendChild(newDescription);
-    li.appendChild(cardActiveState);
-    li.appendChild(saveBtn);
-    li.appendChild(cancelBtn);
+    li.querySelector('.edit-cancel').onclick = () => loadTags();
+    li.querySelector('.edit-input').focus();
 }
 
-async function handleSave(card_uid, newDescription, cardActiveState) {
-    const activeStateInt = parseInt(cardActiveState, 10);
-    const res = await updateTag(card_uid, newDescription, activeStateInt);
+async function handleSave(card_uid, description, is_active) {
+    const res  = await updateTag(card_uid, description, is_active);
     const data = await res.json();
 
-    if (data.status === "ok") {
-        showMessage(`Tag '${card_uid}' edited`, "message", false);
-        loadTags();
+    if (data.status === 'ok') {
+        showMessage(`Card '${card_uid}' updated.`);
+    } else {
+        showMessage(data.message || 'Error updating card.', true);
     }
+
+    loadTags();
 }
+
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+
 window.onload = () => {
     loadTags();
+    document.getElementById('add-btn').addEventListener('click', handleAdd);
 
-    document.getElementById("add-btn").addEventListener("click", handleAdd);
-    document.getElementById("details-btn").addEventListener("click", goToDetails);
+    // also allow Enter key from either input field
+    ['card-uid', 'card-description'].forEach(id => {
+        document.getElementById(id).addEventListener('keydown', e => {
+            if (e.key === 'Enter') handleAdd();
+        });
+    });
 };
