@@ -41,15 +41,28 @@ def receive_tag(data: Tag):
         conn.close()
         return {"status": "duplicate"}
 
+    user_id = None
+    if data.full_name:
+        cursor.execute(
+            "SELECT id FROM users WHERE full_name = ? COLLATE NOCASE",
+            (data.full_name.strip(),),
+        )
+        user_row = cursor.fetchone()        
+        if not user_row:
+            conn.close()
+            return {"status": "user_not_found", "full_name": data.full_name} 
+        user_id = user_row["id"]
+    
     # unnasigned but active
     cursor.execute(
         """
-        INSERT INTO cards (card_uid, description, is_active)
-        VALUES (?, ?, 1)
+        INSERT INTO cards (card_uid, description, user_id, is_active)
+        VALUES (?, ?, ?, 1)
     """,
         (
             data.card_uid,
             data.description,
+            user_id
         ),
     )
 
@@ -64,7 +77,13 @@ def get_tags():
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM cards")
+    
+    cursor.execute("""
+        SELECT c.card_uid, c.description, c.id, c.user_id, c.is_active,
+               (SELECT u.full_name FROM users u WHERE u.id = c.user_id) AS full_name
+        FROM cards c
+    """)
+
     rows = cursor.fetchall()
 
     conn.close()
@@ -76,6 +95,7 @@ def get_tags():
                 "description": r["description"],
                 "id": r["id"],
                 "user_id": r["user_id"],
+                "full_name": r["full_name"],
                 "is_active": r["is_active"],
             }
             for r in rows
@@ -122,25 +142,43 @@ def edit_tag(uid: str, data: UpdateTag):
         conn.close()
         return {"status": "not found"}
 
-    # no user- you cant "name" it
-    cursor.execute(
-        """
-        UPDATE cards
-        SET description = ?, is_active = ?
-        WHERE card_uid = ?
-    """,
-        (data.description, data.is_active, uid),
-    )
-
+        # optionally re-assign user
+    user_id = None
+    if data.full_name:
+        cursor.execute(
+            "SELECT id FROM users WHERE full_name = ? COLLATE NOCASE",
+            (data.full_name.strip(),),
+        )
+        user_row = cursor.fetchone()
+        if not user_row:
+            conn.close()
+            return {"status": "user_not_found", "full_name": data.full_name}
+        user_id = user_row["id"]
+ 
+    if user_id is not None:
+        cursor.execute(
+            """
+            UPDATE cards
+            SET description = ?, is_active = ?, user_id = ?
+            WHERE card_uid = ?
+            """,
+            (data.description, data.is_active, user_id, uid),
+        )
+    else:
+        cursor.execute(
+            """
+            UPDATE cards
+            SET description = ?, is_active = ?
+            WHERE card_uid = ?
+            """,
+            (data.description, data.is_active, uid),
+        )
+ 
     conn.commit()
     conn.close()
+ 
+    return {"status": "ok", "card_uid": uid}
 
-    return {
-        "status": "ok",
-        "card_uid": uid,
-        "description": data.description,
-        "is_active": data.is_active,
-    }
 
 
 @router.get("/details/data")

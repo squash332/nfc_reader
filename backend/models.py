@@ -9,11 +9,13 @@ class Tag(BaseModel):
     description: Optional[str]
     is_active: bool = False
     created_at: datetime = datetime.now()
+    full_name: Optional[str] = None
 
 
 class UpdateTag(BaseModel):
     description: str
     is_active : int
+    full_name: Optional[str] = None
 
 class Event(BaseModel):
     event_time: datetime

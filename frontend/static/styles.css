@@ -306,6 +306,14 @@ html, body {
     color: var(--text-dim);
 }
 
+.form-label-optional {
+    font-weight: 400;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    font-size: 8px;
+    text-transform: lowercase;
+}
+
 .form-input {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -489,6 +497,11 @@ html, body {
     text-overflow: ellipsis;
     white-space: nowrap;
     padding-right: 12px;
+}
+
+.card-desc.unassigned {
+    color: var(--text-dim);
+    font-style: italic;
 }
 
 .card-status-badge {

@@ -7,11 +7,11 @@ export async function fetchTags() {
     return res.json();
 }
 
-async function createTag(card_uid, description) {
+async function createTag(card_uid, description, full_name) {
     return fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ card_uid, description })
+        body: JSON.stringify({ card_uid, description, full_name })
     });
 }
 
@@ -19,11 +19,11 @@ async function deleteTag(card_uid) {
     return fetch(`${apiUrl}/${card_uid}`, { method: 'DELETE' });
 }
 
-async function updateTag(card_uid, description, is_active) {
+async function updateTag(card_uid, description, is_active, full_name) {
     return fetch(`${apiUrl}/${card_uid}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description, is_active })
+        body: JSON.stringify({ description, is_active, full_name })
     });
 }
 
@@ -73,9 +73,12 @@ function createCardElement(tag, index) {
 
     const isActive = Boolean(tag.is_active);
 
+    const userLabel = tag.full_name ?? '—';
+    const userClass = tag.full_name ? 'card-desc' : 'card-desc unassigned';
+
     li.innerHTML = `
         <div class="card-uid" title="${tag.card_uid}">${tag.card_uid}</div>
-        <div class="card-desc" title="${tag.description ?? ''}">${tag.description ?? '—'}</div>
+        <div class="${userClass}" title="${tag.full_name ?? 'Unassigned'}">${userLabel}</div>
         <div>
             <span class="card-status-badge ${isActive ? 'badge-active' : 'badge-inactive'}">
                 <span class="badge-dot"></span>
@@ -89,7 +92,7 @@ function createCardElement(tag, index) {
     `;
 
     li.querySelector('.remove').onclick = () => handleRemove(tag.card_uid);
-    li.querySelector('.edit').onclick   = () => enterEditMode(tag);
+    li.querySelector('.edit').onclick = () => enterEditMode(tag);
 
     return li;
 }
@@ -124,10 +127,12 @@ async function loadTags() {
 }
 
 async function handleAdd() {
-    const uidInput  = document.getElementById('card-uid');
+    const uidInput = document.getElementById('card-uid');
     const descInput = document.getElementById('card-description');
-    const card_uid  = uidInput.value.trim();
-    const desc      = descInput.value.trim();
+    const userInput = document.getElementById('card-user');
+    const card_uid = uidInput.value.trim();
+    const desc = descInput.value.trim();
+    const full_name = userInput.value.trim();
 
     if (!card_uid || !desc) {
         showMessage('Both UID and description are required.', true);
@@ -135,27 +140,33 @@ async function handleAdd() {
         return;
     }
 
-    const res  = await createTag(card_uid, desc);
+    const res = await createTag(card_uid, desc, full_name);
     const data = await res.json();
 
     if (data.status === 'ok') {
-        showMessage(`Card '${card_uid}' registered.`);
+        showMessage(`Card '${card_uid}' registered${full_name ? ` — assigned to ${full_name}` : ''}.`);
         setScanZone('success', 'REGISTERED');
-        uidInput.value  = '';
+        uidInput.value = '';
         descInput.value = '';
+        userInput.value = '';
+
     } else if (data.status === 'duplicate') {
         showMessage(`UID '${card_uid}' already exists.`, true);
         setScanZone('error', 'DUPLICATE UID');
+    } else if (data.status === 'user_not_found') {
+        showMessage(`User '${data.full_name}' not found in the system.`, true);
+        setScanZone('error', 'USER NOT FOUND');
     } else {
         showMessage(data.message || 'Unknown error.', true);
         setScanZone('error', 'ERROR');
     }
 
+
     loadTags();
 }
 
 async function handleRemove(card_uid) {
-    const res  = await deleteTag(card_uid);
+    const res = await deleteTag(card_uid);
     const data = await res.json();
 
     if (data.status === 'removed') {
@@ -176,7 +187,8 @@ function enterEditMode(tag) {
     li.innerHTML = `
         <div class="edit-form">
             <span class="edit-uid-label">${tag.card_uid}</span>
-            <input class="edit-input" type="text" placeholder="New description" value="">
+            <input class="edit-input edit-desc" type="text" placeholder="Description" value="${tag.description ?? ''}">
+            <input class="edit-input edit-user" type="text" placeholder="Assign user" value="${tag.full_name ?? ''}">
             <select class="edit-select">
                 <option value="1" ${tag.is_active ? 'selected' : ''}>ACTIVE</option>
                 <option value="0" ${!tag.is_active ? 'selected' : ''}>INACTIVE</option>
@@ -186,22 +198,26 @@ function enterEditMode(tag) {
         </div>
     `;
 
+
     li.querySelector('.edit-save').onclick = () => {
-        const desc    = li.querySelector('.edit-input').value.trim();
-        const active  = parseInt(li.querySelector('.edit-select').value, 10);
-        handleSave(tag.card_uid, desc, active);
+        const desc = li.querySelector('.edit-input.edit-desc').value.trim();
+        const full_name = li.querySelector('.edit-input.edit-user').value.trim();
+        const active = parseInt(li.querySelector('.edit-select').value, 10);
+        handleSave(tag.card_uid, desc, active, full_name);
     };
 
     li.querySelector('.edit-cancel').onclick = () => loadTags();
     li.querySelector('.edit-input').focus();
 }
 
-async function handleSave(card_uid, description, is_active) {
-    const res  = await updateTag(card_uid, description, is_active);
+async function handleSave(card_uid, description, is_active, full_name) {
+    const res = await updateTag(card_uid, description, is_active, full_name);
     const data = await res.json();
 
     if (data.status === 'ok') {
         showMessage(`Card '${card_uid}' updated.`);
+    } else if (data.status === 'user_not_found') {
+        showMessage(`User '${data.full_name}' not found in the system.`, true);
     } else {
         showMessage(data.message || 'Error updating card.', true);
     }
@@ -217,7 +233,7 @@ window.onload = () => {
     document.getElementById('add-btn').addEventListener('click', handleAdd);
 
     // also allow Enter key from either input field
-    ['card-uid', 'card-description'].forEach(id => {
+    ['card-uid', 'card-description', 'card-user'].forEach(id => {
         document.getElementById(id).addEventListener('keydown', e => {
             if (e.key === 'Enter') handleAdd();
         });
