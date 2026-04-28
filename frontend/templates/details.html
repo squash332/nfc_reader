@@ -7,7 +7,9 @@
     <title>Access Log — Entry Details</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Barlow+Condensed:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="static/details.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
@@ -74,22 +76,33 @@
                 <div class="date-inputs">
                     <div class="date-field">
                         <label class="date-label">FROM</label>
-                        <input type="text" class="date-control date-control-from" placeholder="Select date & time" readonly>
+                        <input type="text" class="date-control date-control-from" placeholder="Select date & time"
+                            readonly>
                     </div>
                     <div class="date-field">
                         <label class="date-label">TO</label>
-                        <input type="text" class="date-control date-control-to" placeholder="Select date & time" readonly>
+                        <input type="text" class="date-control date-control-to" placeholder="Select date & time"
+                            readonly>
                     </div>
                     <button id="get-data-btn" class="primary-btn">
                         <span>▶</span> QUERY LOGS
                     </button>
                 </div>
             </div>
+            <div class="sidebar-section">
+                <div class="section-label">FILTER BY USER</div>
+                <div class="search-wrap">
+                    <input type="text" id="filter-user-input" class="search-input" placeholder="Filter logs by name…"
+                        autocomplete="off">
+                    <span class="search-icon">⌕</span>
+                </div>
+            </div>
 
             <div class="sidebar-section">
                 <div class="section-label">CARD LOOKUP</div>
                 <div class="search-wrap">
-                    <input type="text" id="search-user-input" class="search-input" placeholder="Search by user name…" autocomplete="off">
+                    <input type="text" id="search-user-input" class="search-input" placeholder="Search by user name…"
+                        autocomplete="off">
                     <span class="search-icon">⌕</span>
                 </div>
                 <div id="user-cards-container"></div>
@@ -146,4 +159,5 @@
     <script type="module" src="static/details.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </body>
+
 </html>

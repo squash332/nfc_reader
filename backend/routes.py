@@ -187,6 +187,7 @@ def show_details(
     start_date: str = None,
     end_date: str = None,
     event_type: Optional[str] = None,
+    full_name: Optional[str] = None,
 ):
     conn = get_connection()
     cursor = conn.cursor()
@@ -228,12 +229,16 @@ def show_details(
         query += " AND e.event_type = ?"
         params.append(event_type)
 
+    if full_name:
+        query += " AND u.full_name LIKE ?"
+        params.append(f"%{full_name}%")
+
     query += " ORDER BY e.event_time DESC"
 
     cursor.execute(query, params)
     event_rows = cursor.fetchall()
 
-    return {"events": event_rows}
+    return {"events": [dict(r) for r in event_rows]}
 
 @router.get("/tag/{full_name}")
 def get_user_tags(full_name: str):

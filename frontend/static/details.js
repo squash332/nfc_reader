@@ -4,7 +4,7 @@ const tagApiUrl = 'http://127.0.0.1:8000/tag';
 let cachedEvents    = [];
 let activeRange     = 'month';
 let activeEventType = '';
-
+let activeUserFilter = '';
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -126,6 +126,7 @@ async function loadDetails(range, startDate = null, endDate = null) {
         if (startDate) params.append('start_date', startDate);
         if (endDate)   params.append('end_date',   endDate);
         if (activeEventType) params.append('event_type', activeEventType);
+        if (activeUserFilter) params.append('full_name', activeUserFilter);
 
         const res  = await fetch(`${apiUrl}?${params}`);
         const data = await res.json();
@@ -174,6 +175,7 @@ function applyEventFilter(type) {
     const filtered = type ? cachedEvents.filter(e => e.event_type === type) : cachedEvents;
     renderDetails(filtered);
 }
+
 
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
@@ -262,4 +264,13 @@ window.onload = () => {
             }
         }
     });
+
+    // filter log by user — live on Enter or clear on empty
+    document.getElementById('filter-user-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            activeUserFilter = e.target.value.trim();
+            loadDetails(activeRange);
+        }
+    });
+
 };
