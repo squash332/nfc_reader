@@ -45,10 +45,28 @@ def init_db():
         user_id INTEGER,
         card_id INTEGER,
         event_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-        event_type TEXT CHECK(event_type IN ('in', 'out')),
+        event_type TEXT CHECK(event_type IN ('in', 'out', 'rejected')),
         FOREIGN KEY(card_id) REFERENCES cards(id)
     )
     """)
+
+    # migrate existing events table if it lacks 'rejected' in the check constraint
+    cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='events'")
+    row = cursor.fetchone()
+    if row and 'rejected' not in row[0]:
+        cursor.executescript("""
+            CREATE TABLE events_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                card_id INTEGER,
+                event_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                event_type TEXT CHECK(event_type IN ('in', 'out', 'rejected')),
+                FOREIGN KEY(card_id) REFERENCES cards(id)
+            );
+            INSERT INTO events_new SELECT * FROM events;
+            DROP TABLE events;
+            ALTER TABLE events_new RENAME TO events;
+        """)
 
     # test data
       

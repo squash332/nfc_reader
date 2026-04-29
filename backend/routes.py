@@ -6,7 +6,7 @@ import os
 from typing import Optional
 
 from database import get_connection
-from models import Tag, UpdateTag
+from models import ScanEvent, Tag, UpdateTag
 
 router = APIRouter()
 
@@ -53,11 +53,11 @@ def receive_tag(data: Tag):
             return {"status": "user_not_found", "full_name": data.full_name} 
         user_id = user_row["id"]
     
-    # unnasigned but active
+    # cards default to inactive, changed later by admin
     cursor.execute(
         """
         INSERT INTO cards (card_uid, description, user_id, is_active)
-        VALUES (?, ?, ?, 1)
+        VALUES (?, ?, ?, 0)
     """,
         (
             data.card_uid,
@@ -246,21 +246,17 @@ def get_user_tags(full_name: str):
     cursor = conn.cursor()
 
     cursor.execute(
-        """
-    SELECT cards.card_uid, cards.description, cards.id, cards.user_id, cards.is_active, users.full_name
-    FROM cards
-    JOIN users ON cards.user_id = users.id
-    WHERE users.full_name LIKE ?
-    """,
-        (f"%{full_name}%",),
+    "SELECT id, full_name FROM users WHERE full_name LIKE ?",
+    (f"%{full_name}%",),
     )
+    user = cursor.fetchone()
 
-    user_cards = cursor.fetchall()
-
-    if not user_cards:
+    if not user:
         conn.close()
-        return {"error": "No cards found for the user."}
-    conn.close()
+        return {"error": "No user found."}
+
+    cursor.execute("SELECT * FROM cards WHERE user_id = ?", (user["id"],))
+    user_cards = cursor.fetchall()
 
     return {
         "tags": [
@@ -276,3 +272,47 @@ def get_user_tags(full_name: str):
         ]
     }
 
+@router.post("/event")
+def scan_event(data: ScanEvent):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM cards WHERE card_uid = ?", (data.card_uid,))
+    card = cursor.fetchone()
+
+    # card not in DB — register it as inactive/unassigned
+    if not card:
+        cursor.execute(
+            "INSERT INTO cards (card_uid, is_active) VALUES (?, 0)",
+            (data.card_uid,),
+        )
+        conn.commit()
+        conn.close()
+        return {"status": "registered"}
+
+    # card exists but inactive or no user — rejected
+    if not card["is_active"] or not card["user_id"]:
+        cursor.execute(
+            "INSERT INTO events (card_id, user_id, event_type) VALUES (?, ?, 'rejected')",
+            (card["id"], card["user_id"]),
+        )
+        conn.commit()
+        conn.close()
+        return {"status": "rejected"}
+
+    # card active and assigned — determine in/out from last event
+    cursor.execute(
+        "SELECT event_type FROM events WHERE card_id = ? ORDER BY event_time DESC LIMIT 1",
+        (card["id"],),
+    )
+    last = cursor.fetchone()
+    event_type = "out" if last and last["event_type"] == "in" else "in"
+
+    cursor.execute(
+        "INSERT INTO events (card_id, user_id, event_type) VALUES (?, ?, ?)",
+        (card["id"], card["user_id"], event_type),
+    )
+    conn.commit()
+    conn.close()
+
+    return {"status": "granted", "event_type": event_type}
