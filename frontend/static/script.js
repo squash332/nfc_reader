@@ -130,6 +130,25 @@ function renderTags(tags, updateCache = true) {
     tags.forEach((tag, i) => list.appendChild(createCardElement(tag, i)));
 }
 
+function handleQueryParam() {
+    const params  = new URLSearchParams(window.location.search);
+    const cardUid = params.get('card');
+    if (!cardUid) return;
+
+    const searchEl = document.getElementById('registry-search');
+    searchEl.value = cardUid;
+    applySearch(cardUid);
+
+    setTimeout(() => {
+        const el = document.getElementById(`tag-${cardUid}`);
+        if (!el) return;
+        el.classList.add('highlighted');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+
+    window.history.replaceState({}, '', '/');
+}
+
 
 // ── ACTIONS ───────────────────────────────────────────────────────────────────
 
@@ -137,6 +156,7 @@ async function loadTags() {
     try {
         const data = await fetchTags();
         renderTags(data.tags);
+        handleQueryParam();
     } catch (err) {
         console.error(err);
         showMessage('Failed to load cards.', true);
