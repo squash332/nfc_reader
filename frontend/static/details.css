@@ -186,6 +186,7 @@ html, body {
     flex-direction: column;
     overflow-y: auto;
     overflow-x: hidden;
+    height: 100%;
 }
 
 .sidebar::-webkit-scrollbar { width: 4px; }
@@ -413,11 +414,33 @@ html, body {
     font-size: 11px;
     color: var(--text-secondary);
     line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .user-card-item .card-uid {
     color: var(--amber);
     font-weight: 500;
+}
+
+.card-lookup-meta {
+    color: var(--text-secondary);
+    font-size: 10px;
+}
+
+.card-manage-link {
+    color: var(--text-dim);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-decoration: none;
+    margin-top: 2px;
+    transition: color 0.15s;
+}
+
+.card-manage-link:hover {
+    color: var(--amber);
 }
 
 /* ── MAIN PANEL ── */

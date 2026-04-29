@@ -1,5 +1,7 @@
 const apiUrl = 'http://127.0.0.1:8000/tag';
 
+let allTags = [];
+
 // ── API ───────────────────────────────────────────────────────────────────────
 
 export async function fetchTags() {
@@ -62,6 +64,20 @@ function updateCardCount(tags) {
     el.textContent = `${tags.length} card${tags.length !== 1 ? 's' : ''} registered — ${active} active`;
 }
 
+// ── SEARCH FILTER ─────────────────────────────────────────────────────────────
+
+function applySearch(query) {
+    const q = query.toLowerCase();
+    const filtered = q
+        ? allTags.filter(t =>
+            t.card_uid.toLowerCase().includes(q) ||
+            (t.full_name && t.full_name.toLowerCase().includes(q))
+        )
+        : allTags;
+    renderTags(filtered, false); // false = don't re-cache allTags
+}
+
+
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
 
@@ -97,7 +113,8 @@ function createCardElement(tag, index) {
     return li;
 }
 
-function renderTags(tags) {
+function renderTags(tags, updateCache = true) {
+    if (updateCache) allTags = tags;
     const list = document.getElementById('card-list');
     const emptyState = document.getElementById('empty-state');
     list.innerHTML = '';
@@ -238,4 +255,10 @@ window.onload = () => {
             if (e.key === 'Enter') handleAdd();
         });
     });
+
+    // live client-side search
+    document.getElementById('registry-search').addEventListener('input', e => {
+        applySearch(e.target.value);
+    });
+
 };

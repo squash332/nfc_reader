@@ -1,8 +1,8 @@
-const apiUrl    = 'http://127.0.0.1:8000/details/data';
+const apiUrl = 'http://127.0.0.1:8000/details/data';
 const tagApiUrl = 'http://127.0.0.1:8000/tag';
 
-let cachedEvents    = [];
-let activeRange     = 'month';
+let cachedEvents = [];
+let activeRange = 'month';
 let activeEventType = '';
 let activeUserFilter = '';
 
@@ -24,12 +24,12 @@ function setRangeLabel(label) {
 
 function updateCounts(events) {
     const total = events.length;
-    const inCount  = events.filter(e => e.event_type === 'in').length;
+    const inCount = events.filter(e => e.event_type === 'in').length;
     const outCount = events.filter(e => e.event_type === 'out').length;
 
     document.getElementById('count-total').textContent = total;
-    document.getElementById('count-in').textContent    = inCount;
-    document.getElementById('count-out').textContent   = outCount;
+    document.getElementById('count-in').textContent = inCount;
+    document.getElementById('count-out').textContent = outCount;
 }
 
 
@@ -106,12 +106,17 @@ function renderUserCards(cards) {
             const item = document.createElement('div');
             item.className = 'user-card-item';
             const status = card.is_active ? 'ACTIVE' : 'INACTIVE';
-            item.innerHTML = `<span class="card-uid">${card.card_uid}</span><br>${card.description ?? '—'} · ${status}`;
+            item.innerHTML = `
+                <span class="card-uid">${card.card_uid}</span>
+                <span class="card-lookup-meta">${card.description ?? '—'} · ${status}</span>
+                <a href="/?card=${encodeURIComponent(card.card_uid)}" class="card-manage-link">MANAGE →</a>
+            `;
             wrapper.appendChild(item);
         });
 
         container.appendChild(wrapper);
     });
+
 }
 
 
@@ -124,11 +129,11 @@ async function loadDetails(range, startDate = null, endDate = null) {
     try {
         const params = new URLSearchParams({ time_range: range });
         if (startDate) params.append('start_date', startDate);
-        if (endDate)   params.append('end_date',   endDate);
+        if (endDate) params.append('end_date', endDate);
         if (activeEventType) params.append('event_type', activeEventType);
         if (activeUserFilter) params.append('full_name', activeUserFilter);
 
-        const res  = await fetch(`${apiUrl}?${params}`);
+        const res = await fetch(`${apiUrl}?${params}`);
         const data = await res.json();
 
         if (data.error) {
@@ -147,7 +152,7 @@ async function loadDetails(range, startDate = null, endDate = null) {
 
 async function searchByUser(full_name) {
     try {
-        const res  = await fetch(`${tagApiUrl}/${encodeURIComponent(full_name)}`);
+        const res = await fetch(`${tagApiUrl}/${encodeURIComponent(full_name)}`);
         const data = await res.json();
         renderUserCards(data.tags);
     } catch (err) {
@@ -187,12 +192,12 @@ window.onload = () => {
     const fpConfig = {
         enableTime: true,
         dateFormat: 'Y-m-d H:i',
-        altInput:   true,
-        altFormat:  'F j, Y (h:i K)',
-        time_24hr:  false,
+        altInput: true,
+        altFormat: 'F j, Y (h:i K)',
+        time_24hr: false,
     };
     flatpickr('.date-control-from', fpConfig);
-    flatpickr('.date-control-to',   fpConfig);
+    flatpickr('.date-control-to', fpConfig);
 
     // initial load
     loadDetails('month');
@@ -222,7 +227,7 @@ window.onload = () => {
         // Flatpickr writes the dateFormat value to the original (hidden) input.
         // The altInput is only for display — always read from the original.
         const from = document.querySelector('.date-control-from').value;
-        const to   = document.querySelector('.date-control-to').value;
+        const to = document.querySelector('.date-control-to').value;
 
         if (!from || !to) {
             // visually hint the empty fields instead of an alert
@@ -266,7 +271,7 @@ window.onload = () => {
     });
 
     // filter log by user — live on Enter or clear on empty
-    document.getElementById('filter-user-input').addEventListener('keydown', e => {
+    document.getElementById('filter-user-input').addEventListener('input', e => {
         if (e.key === 'Enter') {
             activeUserFilter = e.target.value.trim();
             loadDetails(activeRange);

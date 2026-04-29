@@ -411,6 +411,38 @@ html, body {
     align-items: center;
 }
 
+.registry-search-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 260px;
+}
+
+.registry-search {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 7px 32px 7px 10px;
+    border-radius: var(--radius);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.registry-search::placeholder { color: var(--text-dim); }
+.registry-search:focus { border-color: var(--amber-dim); }
+
+.search-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    font-size: 16px;
+    pointer-events: none;
+}
+
 .legend-item {
     font-size: 9px;
     font-weight: 700;
@@ -478,6 +510,17 @@ html, body {
 .card-item:hover { background: var(--bg-hover); }
 .card-item.is-active  { border-left: 2px solid var(--green); }
 .card-item.is-inactive { border-left: 2px solid var(--border-lit); }
+
+.card-item.highlighted {
+    background: var(--amber-glow);
+    border-left: 2px solid var(--amber);
+    animation: highlight-fade 3s ease forwards;
+}
+
+@keyframes highlight-fade {
+    0%   { background: var(--amber-glow); }
+    100% { background: transparent; }
+}
 
 .card-uid {
     font-size: 12px;
