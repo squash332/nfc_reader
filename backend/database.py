@@ -27,13 +27,14 @@ def init_db():
                    """
     )
 
+    # card default inactive == 0 until admin changes it
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS cards (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
         card_uid TEXT UNIQUE NOT NULL,
         description TEXT,
-        is_active BOOLEAN DEFAULT 1,
+        is_active BOOLEAN DEFAULT 0, 
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(id)
     )

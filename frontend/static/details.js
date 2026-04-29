@@ -272,10 +272,17 @@ window.onload = () => {
 
     // filter log by user — live on Enter or clear on empty
     document.getElementById('filter-user-input').addEventListener('input', e => {
-        if (e.key === 'Enter') {
-            activeUserFilter = e.target.value.trim();
-            loadDetails(activeRange);
-        }
+    if (e.target.value === '') {
+        activeUserFilter = '';
+        loadDetails(activeRange);
+    }
+    });
+
+    document.getElementById('filter-user-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        activeUserFilter = e.target.value.trim();
+        loadDetails(activeRange);
+    }
     });
 
 };

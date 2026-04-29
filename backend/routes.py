@@ -109,20 +109,14 @@ def remove_tag(uid: str):
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM cards WHERE card_uid = ?", (uid,))
-    existing = cursor.fetchone()
+    card = cursor.fetchone()
 
-    if not existing:
+    if not card:
         conn.close()
         return {"status": "not found"}
 
-    # set tag to inactive instead of deleting
-    cursor.execute(
-        """
-        DELETE FROM cards
-        WHERE card_uid = ?
-    """,
-        (uid,),
-    )
+    cursor.execute("DELETE FROM events WHERE card_id = ?", (card["id"],))
+    cursor.execute("DELETE FROM cards WHERE card_uid = ?", (uid,))
 
     conn.commit()
     conn.close()
@@ -264,7 +258,7 @@ def get_user_tags(full_name: str):
                 "card_uid": r["card_uid"],
                 "description": r["description"],
                 "id": r["id"],
-                "full_name": r["full_name"],
+                "full_name": user["full_name"],
                 "user_id": r["user_id"],
                 "is_active": r["is_active"],
             }
