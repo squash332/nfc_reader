@@ -16,34 +16,20 @@ extern "C" void app_main()
     PN532 pn532;
     char block_data[16];
 
-    if (pn532.init_module_and_bus() != ESP_OK)
+    // wait for pn532 init, then continue 
+    while (pn532.init_module_and_bus() != ESP_OK)
     {
-        ESP_LOGE(TAG, "PN532 init failed");
-        return;
-    }
-    else
-    {
-        ESP_LOGI(TAG, "PN532 init success!");
+        ESP_LOGE(TAG, "PN532 init failed, retrying...");
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
+    ESP_LOGI(TAG, "PN532 init success!");
+
     while (true)
     {
-        if (wifi_status == WIFI_SUCCESS && pn532.readCard()) 
+        if (wifi_status == WIFI_SUCCESS && pn532.readCard())
         {
-            pn532.printBlock(0, 1);
+            send_POST(pn532.uid_string);
             vTaskDelay(pdMS_TO_TICKS(500));
-
-            esp_err_t ret = pn532.writeBlock(0, 1, "lmao");
-            if (pn532.readBlock(1, (uint8_t *)block_data, 16) == ESP_OK) {
-                send_POST(pn532.uid_string, block_data);
-            }
-
-            if (ret != ESP_OK)
-            {
-                ESP_LOGE(TAG, "WRITE FAILED");
-            }
-            pn532.printBlock(0, 1);
-            pn532.writeBlock(0, 1, "jeff");
         }
 
         vTaskDelay(pdMS_TO_TICKS(1000));
