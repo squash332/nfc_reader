@@ -50,24 +50,29 @@ function renderDetails(events) {
     events.forEach((e, i) => {
         const { date, time } = formatTimestamp(e.event_time);
         const isIn = e.event_type === 'in';
+        const isRejected = e.event_type === 'rejected'; 
+        const badgeClass = isIn ? 'badge-in' : isRejected ? 'badge-rejected' : 'badge-out';
+        const badgeLabel = isIn ? 'ENTRY' : isRejected ? 'REJECTED' : 'EXIT';
+
 
         const row = document.createElement('div');
         row.className = `log-row event-${e.event_type}`;
         row.style.animationDelay = `${Math.min(i * 20, 400)}ms`;
 
-        row.innerHTML = `
+                row.innerHTML = `
             <div class="log-timestamp">
                 <span class="date-part">${date}</span>${time}
             </div>
             <div class="log-user">${e.full_name ?? '—'}</div>
             <div class="log-card" title="${e.card_uid ?? ''}">${e.description ?? e.card_uid ?? '—'}</div>
             <div>
-                <span class="log-badge ${isIn ? 'badge-in' : 'badge-out'}">
+                <span class="log-badge ${badgeClass}">
                     <span class="badge-dot"></span>
-                    ${isIn ? 'ENTRY' : 'EXIT'}
+                    ${badgeLabel}
                 </span>
             </div>
         `;
+
 
         container.appendChild(row);
     });
@@ -240,6 +245,10 @@ window.onload = () => {
             return;
         }
 
+        activeEventType = '';
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector('.filter-tab[data-type=""]').classList.add('active');
+
         activeRange = 'custom';
         // from/to are already "YYYY-MM-DD HH:MM" — exactly what the backend strptime expects
         const [fromDate, toDate] = [new Date(from), new Date(to)];
@@ -248,6 +257,22 @@ window.onload = () => {
         loadDetails('custom', from, to);
 
         document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+    });
+
+    // clear custom range btn
+    document.getElementById('clear-date-btn').addEventListener('click', () => {
+        // clear flatpickr inputs
+        document.querySelector('.date-control-from')._flatpickr.clear();
+        document.querySelector('.date-control-to')._flatpickr.clear();
+
+        // reset to month and ALL
+        activeRange = 'month';
+        activeEventType = '';
+        setActiveRange('month-btn', 'Last 30 days');
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector('.filter-tab[data-type=""]').classList.add('active');
+
+        loadDetails('month');
     });
 
     // event type filter tabs

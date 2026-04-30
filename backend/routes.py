@@ -47,23 +47,19 @@ def receive_tag(data: Tag):
             "SELECT id FROM users WHERE full_name = ? COLLATE NOCASE",
             (data.full_name.strip(),),
         )
-        user_row = cursor.fetchone()        
+        user_row = cursor.fetchone()
         if not user_row:
             conn.close()
-            return {"status": "user_not_found", "full_name": data.full_name} 
+            return {"status": "user_not_found", "full_name": data.full_name}
         user_id = user_row["id"]
-    
+
     # cards default to inactive, changed later by admin
     cursor.execute(
         """
         INSERT INTO cards (card_uid, description, user_id, is_active)
         VALUES (?, ?, ?, 0)
     """,
-        (
-            data.card_uid,
-            data.description,
-            user_id
-        ),
+        (data.card_uid, data.description, user_id),
     )
 
     conn.commit()
@@ -77,12 +73,13 @@ def get_tags():
     conn = get_connection()
     cursor = conn.cursor()
 
-    
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT c.card_uid, c.description, c.id, c.user_id, c.is_active,
                (SELECT u.full_name FROM users u WHERE u.id = c.user_id) AS full_name
         FROM cards c
-    """)
+    """
+    )
 
     rows = cursor.fetchall()
 
@@ -148,7 +145,7 @@ def edit_tag(uid: str, data: UpdateTag):
             conn.close()
             return {"status": "user_not_found", "full_name": data.full_name}
         user_id = user_row["id"]
- 
+
     if user_id is not None:
         cursor.execute(
             """
@@ -167,12 +164,11 @@ def edit_tag(uid: str, data: UpdateTag):
             """,
             (data.description, data.is_active, uid),
         )
- 
+
     conn.commit()
     conn.close()
- 
-    return {"status": "ok", "card_uid": uid}
 
+    return {"status": "ok", "card_uid": uid}
 
 
 @router.get("/details/data")
@@ -210,21 +206,21 @@ def show_details(
 
     # base query
     query = """
-        SELECT e.event_time, e.event_type, c.card_uid, c.description, u.full_name
+        SELECT e.event_time, e.event_type, c.card_uid, c.description,
+        (SELECT u.full_name FROM users u WHERE u.id = c.user_id) AS full_name
         FROM events e
-        JOIN cards c on e.card_id = c.id
-        JOIN users u on c.user_id = u.id
+        JOIN cards c ON e.card_id = c.id
         WHERE e.event_time >= ? AND e.event_time < ?
     """
     params = [since, until]
 
     # optional filter
-    if event_type in ("in", "out"):
+    if event_type in ("in", "out", "rejected"):
         query += " AND e.event_type = ?"
         params.append(event_type)
 
     if full_name:
-        query += " AND u.full_name LIKE ?"
+        query += " AND (SELECT u.full_name FROM users u WHERE u.id = c.user_id) LIKE ?"
         params.append(f"%{full_name}%")
 
     query += " ORDER BY e.event_time DESC"
@@ -234,14 +230,15 @@ def show_details(
 
     return {"events": [dict(r) for r in event_rows]}
 
+
 @router.get("/tag/{full_name}")
 def get_user_tags(full_name: str):
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(
-    "SELECT id, full_name FROM users WHERE full_name LIKE ?",
-    (f"%{full_name}%",),
+        "SELECT id, full_name FROM users WHERE full_name LIKE ?",
+        (f"%{full_name}%",),
     )
     user = cursor.fetchone()
 
@@ -265,6 +262,7 @@ def get_user_tags(full_name: str):
             for r in user_cards
         ]
     }
+
 
 @router.post("/event")
 def scan_event(data: ScanEvent):
