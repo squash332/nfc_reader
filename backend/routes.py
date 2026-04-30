@@ -127,13 +127,10 @@ def edit_tag(uid: str, data: UpdateTag):
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM cards WHERE card_uid = ?", (uid,))
-    card = cursor.fetchone()
-
-    if not card:
+    if not cursor.fetchone():
         conn.close()
         return {"status": "not found"}
 
-        # optionally re-assign user
     user_id = None
     if data.full_name:
         cursor.execute(
@@ -146,24 +143,15 @@ def edit_tag(uid: str, data: UpdateTag):
             return {"status": "user_not_found", "full_name": data.full_name}
         user_id = user_row["id"]
 
-    if user_id is not None:
-        cursor.execute(
-            """
-            UPDATE cards
-            SET description = ?, is_active = ?, user_id = ?
-            WHERE card_uid = ?
-            """,
-            (data.description, data.is_active, user_id, uid),
-        )
-    else:
-        cursor.execute(
-            """
-            UPDATE cards
-            SET description = ?, is_active = ?
-            WHERE card_uid = ?
-            """,
-            (data.description, data.is_active, uid),
-        )
+    # always update user_id — None unassigns the card
+    cursor.execute(
+        """
+        UPDATE cards
+        SET description = ?, is_active = ?, user_id = ?
+        WHERE card_uid = ?
+        """,
+        (data.description, data.is_active, user_id, uid),
+    )
 
     conn.commit()
     conn.close()

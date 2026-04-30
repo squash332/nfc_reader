@@ -294,7 +294,7 @@ html, body {
 }
 
 .filter-tab.rejected.active {
-    background: rgba(240, 168, 50, 0.12);
+    background: rgba(240, 168, 50, 0.25);
     border-color: var(--amber-dim);
     color: var(--amber);
 }
@@ -644,6 +644,12 @@ html, body {
     background: var(--red-glow);
     border: 1px solid var(--red-dim);
     color: var(--red);
+}
+
+.log-badge.badge-rejected {
+    background: rgba(240, 168, 50, 0.25);
+    border: 1px solid var(--amber-dim);
+    color: var(--amber);
 }
 
 .badge-dot {

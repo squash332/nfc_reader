@@ -25,7 +25,7 @@ async function updateTag(card_uid, description, is_active, full_name) {
     return fetch(`${apiUrl}/${card_uid}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description, is_active, full_name })
+        body: JSON.stringify({ description, is_active, full_name: full_name || null})
     });
 }
 
