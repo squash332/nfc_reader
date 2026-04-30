@@ -14,7 +14,6 @@ extern "C" void app_main()
     http_init();
 
     PN532 pn532;
-    char block_data[16];
 
     // wait for pn532 init, then continue 
     while (pn532.init_module_and_bus() != ESP_OK)
@@ -25,7 +24,8 @@ extern "C" void app_main()
     ESP_LOGI(TAG, "PN532 init success!");
 
     while (true)
-    {
+    {   
+        // dont forget to set AP to 2.4 GHz (tested on ESP32S3 devkitc1 - only supports 2.4 GHz)
         if (wifi_status == WIFI_SUCCESS && pn532.readCard())
         {
             send_POST(pn532.uid_string);
