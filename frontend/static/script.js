@@ -141,9 +141,12 @@ function createCardElement(tag, index) {
         : '—';
     const userClass = tag.full_name ? 'card-desc' : 'card-desc unassigned';
 
+    const emailLabel = tag.email ?? '—';
+
     li.innerHTML = `
         <div class="card-uid" title="${tag.card_uid}">${tag.card_uid}</div>
         <div class="${userClass}">${userLabel}</div>
+        <div class="card-email" title="${tag.email ?? ''}">${emailLabel}</div>
         <div>
             <span class="card-status-badge ${isActive ? 'badge-active' : 'badge-inactive'}">
                 <span class="badge-dot"></span>
