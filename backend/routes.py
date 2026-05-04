@@ -42,15 +42,12 @@ def receive_tag(data: Tag):
         return {"status": "duplicate"}
 
     user_id = None
-    if data.full_name:
-        cursor.execute(
-            "SELECT id FROM users WHERE full_name = ? COLLATE NOCASE",
-            (data.full_name.strip(),),
-        )
+    if data.email:
+        cursor.execute("SELECT id FROM users WHERE email = ?", (data.email.strip(),))
         user_row = cursor.fetchone()
         if not user_row:
             conn.close()
-            return {"status": "user_not_found", "full_name": data.full_name}
+            return {"status": "user_not_found", "email": data.email}
         user_id = user_row["id"]
 
     # cards default to inactive, changed later by admin
@@ -76,13 +73,13 @@ def get_tags():
     cursor.execute(
         """
         SELECT c.card_uid, c.description, c.id, c.user_id, c.is_active,
-               (SELECT u.full_name FROM users u WHERE u.id = c.user_id) AS full_name
+               (SELECT u.full_name FROM users u WHERE u.id = c.user_id) AS full_name,
+               (SELECT u.email     FROM users u WHERE u.id = c.user_id) AS email
         FROM cards c
     """
     )
 
     rows = cursor.fetchall()
-
     conn.close()
 
     return {
@@ -93,6 +90,7 @@ def get_tags():
                 "id": r["id"],
                 "user_id": r["user_id"],
                 "full_name": r["full_name"],
+                "email": r["email"],
                 "is_active": r["is_active"],
             }
             for r in rows
@@ -132,15 +130,12 @@ def edit_tag(uid: str, data: UpdateTag):
         return {"status": "not found"}
 
     user_id = None
-    if data.full_name:
-        cursor.execute(
-            "SELECT id FROM users WHERE full_name = ? COLLATE NOCASE",
-            (data.full_name.strip(),),
-        )
+    if data.email:
+        cursor.execute("SELECT id FROM users WHERE email = ?", (data.email.strip(),))
         user_row = cursor.fetchone()
         if not user_row:
             conn.close()
-            return {"status": "user_not_found", "full_name": data.full_name}
+            return {"status": "user_not_found", "email": data.email}
         user_id = user_row["id"]
 
     # always update user_id — None unassigns the card

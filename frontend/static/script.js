@@ -10,11 +10,11 @@ export async function fetchTags() {
     return res.json();
 }
 
-async function createTag(card_uid, description, full_name) {
+async function createTag(card_uid, description, email) {
     return fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ card_uid, description, full_name })
+        body: JSON.stringify({ card_uid, description, email: email || null })
     });
 }
 
@@ -22,11 +22,11 @@ async function deleteTag(card_uid) {
     return fetch(`${apiUrl}/${card_uid}`, { method: 'DELETE' });
 }
 
-async function updateTag(card_uid, description, is_active, full_name) {
+async function updateTag(card_uid, description, is_active, email) {
     return fetch(`${apiUrl}/${card_uid}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description, is_active, full_name: full_name || null})
+        body: JSON.stringify({ description, is_active, email: email || null })
     });
 }
 
@@ -161,7 +161,7 @@ async function handleAdd() {
     const userInput = document.getElementById('card-user');
     const card_uid = uidInput.value.trim();
     const desc = descInput.value.trim();
-    const full_name = userInput.value.trim();
+    const email = userInput.value.trim();
 
     if (!card_uid || !desc) {
         showMessage('Both UID and description are required.', true);
@@ -169,11 +169,11 @@ async function handleAdd() {
         return;
     }
 
-    const res = await createTag(card_uid, desc, full_name);
+    const res = await createTag(card_uid, desc, email);
     const data = await res.json();
 
     if (data.status === 'ok') {
-        showMessage(`Card '${card_uid}' registered${full_name ? ` — assigned to ${full_name}` : ''}.`);
+        showMessage(`Card '${card_uid}' registered${email ? ` — assigned to ${email}` : ''}.`);
         setScanZone('success', 'REGISTERED');
         uidInput.value = '';
         descInput.value = '';
@@ -183,7 +183,7 @@ async function handleAdd() {
         showMessage(`UID '${card_uid}' already exists.`, true);
         setScanZone('error', 'DUPLICATE UID');
     } else if (data.status === 'user_not_found') {
-        showMessage(`User '${data.full_name}' not found in the system.`, true);
+        showMessage(`No user with email '${data.email}'.`, true);
         setScanZone('error', 'USER NOT FOUND');
     } else {
         showMessage(data.message || 'Unknown error.', true);
@@ -217,7 +217,7 @@ function enterEditMode(tag) {
         <div class="edit-form">
             <span class="edit-uid-label">${tag.card_uid}</span>
             <input class="edit-input edit-desc" type="text" placeholder="Description" value="${tag.description ?? ''}">
-            <input class="edit-input edit-user" type="text" placeholder="Assign user" value="${tag.full_name ?? ''}">
+            <input class="edit-input edit-user" type="email" placeholder="Assign by email" value="${tag.email ?? ''}">
             <select class="edit-select">
                 <option value="1" ${tag.is_active ? 'selected' : ''}>ACTIVE</option>
                 <option value="0" ${!tag.is_active ? 'selected' : ''}>INACTIVE</option>
@@ -230,23 +230,23 @@ function enterEditMode(tag) {
 
     li.querySelector('.edit-save').onclick = () => {
         const desc = li.querySelector('.edit-input.edit-desc').value.trim();
-        const full_name = li.querySelector('.edit-input.edit-user').value.trim();
+        const email = li.querySelector('.edit-input.edit-user').value.trim();
         const active = parseInt(li.querySelector('.edit-select').value, 10);
-        handleSave(tag.card_uid, desc, active, full_name);
+        handleSave(tag.card_uid, desc, active, email);
     };
 
     li.querySelector('.edit-cancel').onclick = () => loadTags();
     li.querySelector('.edit-input').focus();
 }
 
-async function handleSave(card_uid, description, is_active, full_name) {
-    const res = await updateTag(card_uid, description, is_active, full_name);
+async function handleSave(card_uid, description, is_active, email) {
+    const res = await updateTag(card_uid, description, is_active, email);
     const data = await res.json();
 
     if (data.status === 'ok') {
         showMessage(`Card '${card_uid}' updated.`);
     } else if (data.status === 'user_not_found') {
-        showMessage(`User '${data.full_name}' not found in the system.`, true);
+        showMessage(`No user with email '${data.email}'.`, true);
     } else {
         showMessage(data.message || 'Error updating card.', true);
     }
