@@ -68,7 +68,7 @@ function createUserElement(user, index) {
     const posClass = user.position ? 'card-desc' : 'card-desc unassigned';
 
     li.innerHTML = `
-        <div class="card-uid user-name" title="${user.full_name}">${user.full_name}</div>
+        <div class="card-uid user-name"><a href="/user/${user.id}" class="user-link">${user.full_name}</a></div>
         <div class="${emailClass}" title="${user.email ?? ''}">${email}</div>
         <div class="${posClass}" title="${user.position ?? ''}">${position}</div>
         <div class="user-card-count">${user.card_count}</div>

@@ -79,12 +79,14 @@ function createCardElement(tag, index) {
 
     const isActive = Boolean(tag.is_active);
 
-    const userLabel = tag.full_name ?? '—';
+    const userLabel = tag.full_name
+        ? `<a href="/user/${tag.user_id}" class="user-link">${tag.full_name}</a>`
+        : '—';
     const userClass = tag.full_name ? 'card-desc' : 'card-desc unassigned';
 
     li.innerHTML = `
         <div class="card-uid" title="${tag.card_uid}">${tag.card_uid}</div>
-        <div class="${userClass}" title="${tag.full_name ?? 'Unassigned'}">${userLabel}</div>
+        <div class="${userClass}">${userLabel}</div>
         <div>
             <span class="card-status-badge ${isActive ? 'badge-active' : 'badge-inactive'}">
                 <span class="badge-dot"></span>

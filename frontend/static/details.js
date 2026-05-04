@@ -63,7 +63,7 @@ function renderDetails(events) {
             <div class="log-timestamp">
                 <span class="date-part">${date}</span>${time}
             </div>
-            <div class="log-user">${e.full_name ?? '—'}</div>
+            <div class="log-user">${e.user_id && e.full_name ? `<a href="/user/${e.user_id}" class="user-link">${e.full_name}</a>` : (e.full_name ?? '—')}</div>
             <div class="log-card" title="${e.card_uid ?? ''}">${e.description ?? e.card_uid ?? '—'}</div>
             <div>
                 <span class="log-badge ${badgeClass}">

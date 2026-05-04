@@ -696,6 +696,14 @@ html, body {
 
 .edit-cancel:hover { border-color: var(--border-lit); color: var(--text-primary); }
 
+/* ── USER LINK ── */
+.user-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.user-link:hover { color: var(--amber); }
+
 /* ── EMPTY STATE ── */
 .empty-state {
     display: flex;

@@ -194,7 +194,7 @@ def show_details(
 
     # base query
     query = """
-        SELECT e.event_time, e.event_type, c.card_uid, c.description,
+        SELECT e.event_time, e.event_type, c.card_uid, c.description, c.user_id,
         (SELECT u.full_name FROM users u WHERE u.id = c.user_id) AS full_name
         FROM events e
         JOIN cards c ON e.card_id = c.id
@@ -257,6 +257,60 @@ async def users_page():
     path = os.path.join(static_directory, "../templates/users.html")
     with open(path, "r") as f:
         return HTMLResponse(content=f.read())
+
+
+@router.get("/user/{user_id}", response_class=HTMLResponse)
+async def user_detail_page(user_id: int):
+    path = os.path.join(static_directory, "../templates/user_detail.html")
+    with open(path, "r") as f:
+        return HTMLResponse(content=f.read())
+
+
+@router.get("/user/{user_id}/info")
+def get_user_info(user_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT u.id, u.full_name, u.email, u.position, u.created_at,
+               COUNT(c.id) AS card_count
+        FROM users u
+        LEFT JOIN cards c ON c.user_id = u.id
+        WHERE u.id = ?
+        GROUP BY u.id
+        """,
+        (user_id,),
+    )
+    user = cursor.fetchone()
+    conn.close()
+    if not user:
+        return {"status": "not_found"}
+    return {"user": dict(user)}
+
+
+@router.get("/user/{user_id}/events")
+def get_user_events(user_id: int, month: str):
+    try:
+        year, mon = map(int, month.split("-"))
+        since = datetime(year, mon, 1)
+        until = datetime(year + 1, 1, 1) if mon == 12 else datetime(year, mon + 1, 1)
+    except (ValueError, AttributeError):
+        return {"error": "Invalid month format. Use YYYY-MM."}
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT e.event_time, e.event_type, c.card_uid, c.description
+        FROM events e
+        JOIN cards c ON e.card_id = c.id
+        WHERE c.user_id = ? AND e.event_time >= ? AND e.event_time < ?
+        ORDER BY e.event_time ASC
+        """,
+        (user_id, since, until),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return {"events": [dict(r) for r in rows]}
 
 
 @router.get("/user")

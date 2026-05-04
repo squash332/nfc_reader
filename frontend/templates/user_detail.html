@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENTINEL — User</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/user_detail.css">
+</head>
+<body>
+
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <div class="app">
+
+        <!-- ── TOP NAV ── -->
+        <header class="topbar">
+            <div class="topbar-brand">
+                <span class="logo-icon">◈</span>
+                <div>
+                    <div class="logo-title">SENTINEL</div>
+                    <div class="logo-sub">Access Control System</div>
+                </div>
+            </div>
+            <nav class="topbar-nav">
+                <a href="/" class="nav-item"><span class="nav-icon">⊞</span> Tag Manager</a>
+                <a href="/details" class="nav-item"><span class="nav-icon">◧</span> Access Log</a>
+                <a href="/users" class="nav-item"><span class="nav-icon">◉</span> Users</a>
+            </nav>
+            <div class="topbar-status">
+                <span class="status-dot"></span>
+                <span class="status-text">LIVE</span>
+            </div>
+        </header>
+
+        <!-- ── BODY ── -->
+        <div class="ud-layout">
+
+            <!-- ── USER INFO BAR ── -->
+            <div class="ud-infobar">
+                <a href="/users" class="ud-back">← USERS</a>
+                <div class="ud-identity">
+                    <span class="ud-name" id="ud-name">—</span>
+                    <span class="ud-meta" id="ud-meta">—</span>
+                </div>
+                <div class="ud-cards-badge" id="ud-cards">— cards</div>
+            </div>
+
+            <!-- ── CALENDAR CONTROLS ── -->
+            <div class="cal-controls">
+                <div class="cal-nav">
+                    <button class="cal-nav-btn" id="prev-month">←</button>
+                    <span class="cal-month-label" id="cal-month-label">—</span>
+                    <button class="cal-nav-btn" id="next-month">→</button>
+                </div>
+                <div class="cal-summary" id="cal-summary"></div>
+            </div>
+
+            <!-- ── CALENDAR ── -->
+            <div class="calendar">
+                <div class="cal-header">
+                    <span>MON</span>
+                    <span>TUE</span>
+                    <span>WED</span>
+                    <span>THU</span>
+                    <span>FRI</span>
+                    <span>SAT</span>
+                    <span>SUN</span>
+                </div>
+                <div class="cal-grid" id="cal-grid"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module" src="/static/user_detail.js"></script>
+</body>
+</html>
