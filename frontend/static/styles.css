@@ -553,7 +553,6 @@ html, body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    padding-left: ;
     text-align: left;
 }
 
