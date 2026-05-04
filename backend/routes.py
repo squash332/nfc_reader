@@ -6,7 +6,7 @@ import os
 from typing import Optional
 
 from database import get_connection
-from models import ScanEvent, Tag, UpdateTag
+from models import ScanEvent, Tag, UpdateTag, CreateUser, UpdateUser
 
 router = APIRouter()
 
@@ -250,6 +250,100 @@ def get_user_tags(full_name: str):
             for r in user_cards
         ]
     }
+
+
+@router.get("/users", response_class=HTMLResponse)
+async def users_page():
+    path = os.path.join(static_directory, "../templates/users.html")
+    with open(path, "r") as f:
+        return HTMLResponse(content=f.read())
+
+
+@router.get("/user")
+def get_users():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT u.id, u.full_name, u.position, u.is_active, u.created_at,
+               COUNT(c.id) AS card_count
+        FROM users u
+        LEFT JOIN cards c ON c.user_id = u.id
+        GROUP BY u.id
+        ORDER BY u.full_name COLLATE NOCASE
+        """
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return {"users": [dict(r) for r in rows]}
+
+
+@router.post("/user")
+def create_user(data: CreateUser):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id FROM users WHERE full_name = ? COLLATE NOCASE",
+        (data.full_name.strip(),),
+    )
+    if cursor.fetchone():
+        conn.close()
+        return {"status": "duplicate", "full_name": data.full_name}
+    cursor.execute(
+        "INSERT INTO users (full_name, position) VALUES (?, ?)",
+        (data.full_name.strip(), data.position),
+    )
+    conn.commit()
+    user_id = cursor.lastrowid
+    conn.close()
+    return {"status": "ok", "id": user_id}
+
+
+@router.put("/user/{user_id}")
+def update_user(user_id: int, data: UpdateUser):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
+    if not cursor.fetchone():
+        conn.close()
+        return {"status": "not_found"}
+    if data.full_name:
+        cursor.execute(
+            "SELECT id FROM users WHERE full_name = ? COLLATE NOCASE AND id != ?",
+            (data.full_name.strip(), user_id),
+        )
+        if cursor.fetchone():
+            conn.close()
+            return {"status": "duplicate", "full_name": data.full_name}
+    cursor.execute(
+        """
+        UPDATE users
+        SET full_name = COALESCE(?, full_name),
+            position  = ?,
+            is_active = ?
+        WHERE id = ?
+        """,
+        (data.full_name.strip() if data.full_name else None, data.position, data.is_active, user_id),
+    )
+    conn.commit()
+    conn.close()
+    return {"status": "ok", "id": user_id}
+
+
+@router.delete("/user/{user_id}")
+def delete_user(user_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, full_name FROM users WHERE id = ?", (user_id,))
+    user = cursor.fetchone()
+    if not user:
+        conn.close()
+        return {"status": "not_found"}
+    cursor.execute("UPDATE cards SET user_id = NULL, is_active = 0 WHERE user_id = ?", (user_id,))
+    cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+    return {"status": "removed", "full_name": user["full_name"]}
 
 
 @router.post("/event")

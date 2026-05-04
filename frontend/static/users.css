@@ -1,0 +1,17 @@
+.users-columns {
+    grid-template-columns: 1fr 160px 60px 90px 140px;
+}
+
+.users-item {
+    grid-template-columns: 1fr 160px 60px 90px 140px;
+}
+
+.user-name {
+    font-size: 13px;
+}
+
+.user-card-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
