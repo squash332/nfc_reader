@@ -190,7 +190,8 @@ def show_details(
     # base query
     query = """
         SELECT e.event_time, e.event_type, c.card_uid, c.description, c.user_id,
-        (SELECT u.full_name FROM users u WHERE u.id = c.user_id) AS full_name
+        (SELECT u.full_name FROM users u WHERE u.id = c.user_id) AS full_name,
+        (SELECT u.email     FROM users u WHERE u.id = c.user_id) AS email
         FROM events e
         JOIN cards c ON e.card_id = c.id
         WHERE e.event_time >= ? AND e.event_time < ?

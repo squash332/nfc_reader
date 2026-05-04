@@ -546,7 +546,7 @@ html, body {
 /* column headers */
 .log-columns {
     display: grid;
-    grid-template-columns: 180px 1fr 1fr 80px;
+    grid-template-columns: 180px 1fr 1fr 1fr 80px;
     gap: 0;
     padding: 8px 28px;
     background: var(--bg-panel);
@@ -575,7 +575,7 @@ html, body {
 /* log rows */
 .log-row {
     display: grid;
-    grid-template-columns: 180px 1fr 1fr 80px;
+    grid-template-columns: 180px 1fr 1fr 1fr 80px;
     align-items: center;
     gap: 0;
     padding: 10px 28px;
@@ -619,6 +619,15 @@ html, body {
     transition: color 0.15s;
 }
 .user-link:hover { color: var(--amber); }
+
+.log-email {
+    font-size: 11px;
+    color: var(--text-secondary);
+    padding-right: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
 .log-card {
     font-size: 11px;
