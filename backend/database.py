@@ -20,12 +20,20 @@ def init_db():
         """ CREATE TABLE IF NOT EXISTS users (
                    id INTEGER PRIMARY KEY AUTOINCREMENT,
                    full_name TEXT NOT NULL,
+                   email TEXT UNIQUE,
                    position TEXT,
-                   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                   is_active BOOLEAN DEFAULT 1
+                   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                    )
                    """
     )
+
+    cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'")
+    users_schema = cursor.fetchone()
+    if users_schema and 'email' not in users_schema[0]:
+        cursor.execute("ALTER TABLE users ADD COLUMN email TEXT")
+        cursor.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL"
+        )
 
     # card default inactive == 0 until admin changes it
     cursor.execute("""

@@ -10,19 +10,19 @@ async function fetchUsers() {
     return res.json();
 }
 
-async function createUser(full_name, position) {
+async function createUser(full_name, email, position) {
     return fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ full_name, position: position || null })
+        body: JSON.stringify({ full_name, email, position: position || null })
     });
 }
 
-async function updateUser(id, full_name, position, is_active) {
+async function updateUser(id, full_name, email, position) {
     return fetch(`${apiUrl}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ full_name, position: position || null, is_active })
+        body: JSON.stringify({ full_name, email, position: position || null })
     });
 }
 
@@ -35,8 +35,7 @@ async function deleteUser(id) {
 
 function updateUserCount(users) {
     const el = document.getElementById('user-count');
-    const active = users.filter(u => u.is_active).length;
-    el.textContent = `${users.length} user${users.length !== 1 ? 's' : ''} registered — ${active} active`;
+    el.textContent = `${users.length} user${users.length !== 1 ? 's' : ''} registered`;
 }
 
 
@@ -47,6 +46,7 @@ function applySearch(query) {
     const filtered = q
         ? allUsers.filter(u =>
             u.full_name.toLowerCase().includes(q) ||
+            (u.email && u.email.toLowerCase().includes(q)) ||
             (u.position && u.position.toLowerCase().includes(q))
         )
         : allUsers;
@@ -59,23 +59,19 @@ function applySearch(query) {
 function createUserElement(user, index) {
     const li = document.createElement('li');
     li.id = `user-${user.id}`;
-    li.className = `card-item users-item ${user.is_active ? 'is-active' : 'is-inactive'}`;
+    li.className = 'card-item users-item';
     li.style.animationDelay = `${Math.min(index * 30, 300)}ms`;
 
-    const isActive = Boolean(user.is_active);
+    const email = user.email ?? '—';
+    const emailClass = user.email ? 'card-desc user-email' : 'card-desc user-email unassigned';
     const position = user.position ?? '—';
     const posClass = user.position ? 'card-desc' : 'card-desc unassigned';
 
     li.innerHTML = `
         <div class="card-uid user-name" title="${user.full_name}">${user.full_name}</div>
-        <div class="${posClass}" title="${user.position ?? 'No position'}">${position}</div>
+        <div class="${emailClass}" title="${user.email ?? ''}">${email}</div>
+        <div class="${posClass}" title="${user.position ?? ''}">${position}</div>
         <div class="user-card-count">${user.card_count}</div>
-        <div>
-            <span class="card-status-badge ${isActive ? 'badge-active' : 'badge-inactive'}">
-                <span class="badge-dot"></span>
-                ${isActive ? 'ACTIVE' : 'INACTIVE'}
-            </span>
-        </div>
         <div class="card-actions">
             <button class="action-btn edit">EDIT</button>
             <button class="action-btn remove">REMOVE</button>
@@ -106,6 +102,7 @@ function renderUsers(users, updateCache = true) {
 }
 
 
+
 // ── ACTIONS ───────────────────────────────────────────────────────────────────
 
 async function loadUsers() {
@@ -120,24 +117,27 @@ async function loadUsers() {
 
 async function handleAdd() {
     const nameInput = document.getElementById('user-name');
+    const emailInput = document.getElementById('user-email');
     const posInput = document.getElementById('user-position');
     const full_name = nameInput.value.trim();
+    const email = emailInput.value.trim();
     const position = posInput.value.trim();
 
-    if (!full_name) {
-        showMessage('Full name is required.', true);
+    if (!full_name || !email) {
+        showMessage('Full name and email are required.', true);
         return;
     }
 
-    const res = await createUser(full_name, position);
+    const res = await createUser(full_name, email, position);
     const data = await res.json();
 
     if (data.status === 'ok') {
         showMessage(`User '${full_name}' added.`);
         nameInput.value = '';
+        emailInput.value = '';
         posInput.value = '';
     } else if (data.status === 'duplicate') {
-        showMessage(`User '${data.full_name}' already exists.`, true);
+        showMessage(`Email '${data.email}' is already registered.`, true);
     } else {
         showMessage('Unknown error.', true);
     }
@@ -167,11 +167,8 @@ function enterEditMode(user) {
     li.innerHTML = `
         <div class="edit-form">
             <input class="edit-input edit-name" type="text" placeholder="Full name" value="${user.full_name}">
+            <input class="edit-input edit-email" type="email" placeholder="Email" value="${user.email ?? ''}">
             <input class="edit-input edit-pos" type="text" placeholder="Position" value="${user.position ?? ''}">
-            <select class="edit-select">
-                <option value="1" ${user.is_active ? 'selected' : ''}>ACTIVE</option>
-                <option value="0" ${!user.is_active ? 'selected' : ''}>INACTIVE</option>
-            </select>
             <button class="edit-save">SAVE</button>
             <button class="edit-cancel">CANCEL</button>
         </div>
@@ -179,28 +176,28 @@ function enterEditMode(user) {
 
     li.querySelector('.edit-save').onclick = () => {
         const full_name = li.querySelector('.edit-name').value.trim();
+        const email = li.querySelector('.edit-email').value.trim();
         const position = li.querySelector('.edit-pos').value.trim();
-        const is_active = parseInt(li.querySelector('.edit-select').value, 10);
-        handleSave(user.id, full_name, position, is_active);
+        handleSave(user.id, full_name, email, position);
     };
 
     li.querySelector('.edit-cancel').onclick = () => loadUsers();
     li.querySelector('.edit-input').focus();
 }
 
-async function handleSave(id, full_name, position, is_active) {
-    if (!full_name) {
-        showMessage('Full name is required.', true);
+async function handleSave(id, full_name, email, position) {
+    if (!full_name || !email) {
+        showMessage('Full name and email are required.', true);
         return;
     }
 
-    const res = await updateUser(id, full_name, position, is_active);
+    const res = await updateUser(id, full_name, email, position);
     const data = await res.json();
 
     if (data.status === 'ok') {
         showMessage(`User updated.`);
     } else if (data.status === 'duplicate') {
-        showMessage(`Name '${data.full_name}' is already taken.`, true);
+        showMessage(`Email '${data.email}' is already registered.`, true);
     } else if (data.status === 'not_found') {
         showMessage('User not found.', true);
     } else {
@@ -218,7 +215,7 @@ window.onload = () => {
 
     document.getElementById('add-btn').addEventListener('click', handleAdd);
 
-    ['user-name', 'user-position'].forEach(id => {
+    ['user-name', 'user-email', 'user-position'].forEach(id => {
         document.getElementById(id).addEventListener('keydown', e => {
             if (e.key === 'Enter') handleAdd();
         });

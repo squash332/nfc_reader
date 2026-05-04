@@ -1,9 +1,9 @@
 .users-columns {
-    grid-template-columns: 1fr 160px 60px 90px 140px;
+    grid-template-columns: 1fr 180px 140px 60px 140px;
 }
 
 .users-item {
-    grid-template-columns: 1fr 160px 60px 90px 140px;
+    grid-template-columns: 1fr 180px 140px 60px 140px;
 }
 
 .user-name {

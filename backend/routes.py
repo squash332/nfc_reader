@@ -265,7 +265,7 @@ def get_users():
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT u.id, u.full_name, u.position, u.is_active, u.created_at,
+        SELECT u.id, u.full_name, u.email, u.position, u.created_at,
                COUNT(c.id) AS card_count
         FROM users u
         LEFT JOIN cards c ON c.user_id = u.id
@@ -282,16 +282,13 @@ def get_users():
 def create_user(data: CreateUser):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        "SELECT id FROM users WHERE full_name = ? COLLATE NOCASE",
-        (data.full_name.strip(),),
-    )
+    cursor.execute("SELECT id FROM users WHERE email = ?", (data.email.strip(),))
     if cursor.fetchone():
         conn.close()
-        return {"status": "duplicate", "full_name": data.full_name}
+        return {"status": "duplicate", "email": data.email}
     cursor.execute(
-        "INSERT INTO users (full_name, position) VALUES (?, ?)",
-        (data.full_name.strip(), data.position),
+        "INSERT INTO users (full_name, email, position) VALUES (?, ?, ?)",
+        (data.full_name.strip(), data.email.strip(), data.position),
     )
     conn.commit()
     user_id = cursor.lastrowid
@@ -307,23 +304,28 @@ def update_user(user_id: int, data: UpdateUser):
     if not cursor.fetchone():
         conn.close()
         return {"status": "not_found"}
-    if data.full_name:
+    if data.email:
         cursor.execute(
-            "SELECT id FROM users WHERE full_name = ? COLLATE NOCASE AND id != ?",
-            (data.full_name.strip(), user_id),
+            "SELECT id FROM users WHERE email = ? AND id != ?",
+            (data.email.strip(), user_id),
         )
         if cursor.fetchone():
             conn.close()
-            return {"status": "duplicate", "full_name": data.full_name}
+            return {"status": "duplicate", "email": data.email}
     cursor.execute(
         """
         UPDATE users
         SET full_name = COALESCE(?, full_name),
-            position  = ?,
-            is_active = ?
+            email     = COALESCE(?, email),
+            position  = ?
         WHERE id = ?
         """,
-        (data.full_name.strip() if data.full_name else None, data.position, data.is_active, user_id),
+        (
+            data.full_name.strip() if data.full_name else None,
+            data.email.strip() if data.email else None,
+            data.position,
+            user_id,
+        ),
     )
     conn.commit()
     conn.close()

@@ -20,9 +20,10 @@ class ScanEvent(BaseModel):
 
 class CreateUser(BaseModel):
     full_name: str
+    email: str
     position: Optional[str] = None
 
 class UpdateUser(BaseModel):
     full_name: Optional[str] = None
+    email: Optional[str] = None
     position: Optional[str] = None
-    is_active: int = 1
