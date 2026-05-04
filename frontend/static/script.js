@@ -1,3 +1,4 @@
+import { showMessage } from "./utils.js";
 const apiUrl = 'http://127.0.0.1:8000/tag';
 
 let allTags = [];
@@ -31,17 +32,6 @@ async function updateTag(card_uid, description, is_active, full_name) {
 
 
 // ── UI HELPERS ────────────────────────────────────────────────────────────────
-
-export function showMessage(text, isError = false) {
-    const el = document.getElementById('message');
-    el.textContent = text;
-    el.className = 'message ' + (isError ? 'error' : 'success');
-    clearTimeout(el._timeout);
-    el._timeout = setTimeout(() => {
-        el.className = 'message';
-        el.textContent = '';
-    }, 3500);
-}
 
 function setScanZone(state, label) {
     // state: '' | 'success' | 'error'
