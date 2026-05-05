@@ -38,42 +38,83 @@
         <!-- ── BODY ── -->
         <div class="ud-layout">
 
-            <!-- ── USER INFO BAR ── -->
-            <div class="ud-infobar">
+            <!-- ── SIDEBAR ── -->
+            <aside class="ud-sidebar">
+
                 <a href="/users" class="ud-back">← USERS</a>
-                <div class="ud-identity">
-                    <span class="ud-name" id="ud-name">—</span>
-                    <span class="ud-meta" id="ud-meta">—</span>
-                </div>
-                <div class="ud-cards-badge" id="ud-cards">— cards</div>
-            </div>
 
-            <!-- ── CALENDAR CONTROLS ── -->
-            <div class="cal-controls">
-                <div class="cal-nav">
-                    <button class="cal-nav-btn" id="prev-btn">←</button>
-                    <span class="cal-month-label" id="cal-label">—</span>
-                    <button class="cal-nav-btn" id="next-btn">→</button>
+                <!-- Profile -->
+                <div class="ud-section">
+                    <div class="ud-section-title">PROFILE</div>
+                    <div class="ud-avatar" id="ud-avatar">—</div>
+                    <div class="ud-name" id="ud-name">—</div>
+                    <div class="ud-field" id="ud-position"></div>
+                    <div class="ud-field ud-email-field" id="ud-email"></div>
+                    <div class="ud-field ud-since" id="ud-since"></div>
                 </div>
-                <div class="cal-view-toggle">
-                    <button class="view-toggle-btn active" id="view-month">MONTH</button>
-                    <button class="view-toggle-btn" id="view-week">WEEK</button>
-                </div>
-                <div class="cal-summary" id="cal-summary"></div>
-            </div>
 
-            <!-- ── CALENDAR ── -->
-            <div class="calendar">
-                <div class="cal-header">
-                    <span>MON</span>
-                    <span>TUE</span>
-                    <span>WED</span>
-                    <span>THU</span>
-                    <span>FRI</span>
-                    <span>SAT</span>
-                    <span>SUN</span>
+                <!-- This month stats -->
+                <div class="ud-section">
+                    <div class="ud-section-title">THIS MONTH</div>
+                    <div class="ud-stat">
+                        <span class="ud-stat-label">DAYS PRESENT</span>
+                        <span class="ud-stat-value" id="stat-days">—</span>
+                    </div>
+                    <div class="ud-stat">
+                        <span class="ud-stat-label">AVG TIME / DAY</span>
+                        <span class="ud-stat-value" id="stat-avg">—</span>
+                    </div>
+                    <div class="ud-stat">
+                        <span class="ud-stat-label">TOTAL HOURS</span>
+                        <span class="ud-stat-value" id="stat-total">—</span>
+                    </div>
+                    <div class="ud-stat ud-stat-last">
+                        <span class="ud-stat-label">LAST ENTRY</span>
+                        <span class="ud-stat-value" id="stat-last">—</span>
+                    </div>
                 </div>
-                <div class="cal-grid" id="cal-grid"></div>
+
+                <!-- Assigned cards -->
+                <div class="ud-section ud-section-cards">
+                    <div class="ud-section-title">
+                        CARDS <span class="ud-card-count" id="ud-card-count"></span>
+                    </div>
+                    <div class="ud-cards-list" id="ud-cards-list"></div>
+                </div>
+
+            </aside>
+
+            <!-- ── MAIN (calendar) ── -->
+            <div class="ud-main">
+
+                <!-- ── CALENDAR CONTROLS ── -->
+                <div class="cal-controls">
+                    <div class="cal-nav">
+                        <button class="cal-nav-btn" id="prev-btn">←</button>
+                        <span class="cal-month-label" id="cal-label">—</span>
+                        <button class="cal-nav-btn" id="next-btn">→</button>
+                    </div>
+                    <div class="cal-view-toggle">
+                        <button class="view-toggle-btn active" id="view-month">MONTH</button>
+                        <button class="view-toggle-btn" id="view-week">WEEK</button>
+                    </div>
+                    <div class="cal-summary" id="cal-summary"></div>
+                </div>
+
+                <!-- ── CALENDAR ── -->
+                <div class="calendar">
+                    <div class="cal-header">
+                        <span>MON</span>
+                        <span>TUE</span>
+                        <span>WED</span>
+                        <span>THU</span>
+                        <span>FRI</span>
+                        <span>SAT</span>
+                        <span>SUN</span>
+                    </div>
+                    <div class="cal-grid" id="cal-grid"></div>
+                </div>
+
             </div>
 
         </div>

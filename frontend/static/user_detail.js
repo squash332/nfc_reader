@@ -29,6 +29,16 @@ async function fetchUserInfo() {
     return res.json();
 }
 
+async function fetchUserStats() {
+    const res = await fetch(`/user/${userId}/stats`);
+    return res.json();
+}
+
+async function fetchUserCards() {
+    const res = await fetch(`/user/${userId}/cards`);
+    return res.json();
+}
+
 async function fetchMonthEvents(year, month) {
     const monthStr = `${year}-${String(month).padStart(2, '0')}`;
     const res = await fetch(`/user/${userId}/events?month=${monthStr}`);
@@ -43,7 +53,14 @@ async function fetchWeekEvents(monday) {
 }
 
 
-// ── USER INFO ─────────────────────────────────────────────────────────────────
+// ── SIDEBAR LOADERS ───────────────────────────────────────────────────────────
+
+function fmtMins(mins) {
+    if (!mins) return '—';
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return h ? `${h}h ${m}m` : `${m}m`;
+}
 
 async function loadUserInfo() {
     const data = await fetchUserInfo();
@@ -53,9 +70,62 @@ async function loadUserInfo() {
     }
     const u = data.user;
     document.title = `SENTINEL — ${u.full_name}`;
+
+    const initials = u.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    document.getElementById('ud-avatar').textContent = initials;
     document.getElementById('ud-name').textContent = u.full_name;
-    document.getElementById('ud-meta').textContent = [u.email, u.position].filter(Boolean).join(' · ');
-    document.getElementById('ud-cards').textContent = `${u.card_count} card${u.card_count !== 1 ? 's' : ''}`;
+    if (u.position) document.getElementById('ud-position').textContent = u.position;
+    if (u.email)    document.getElementById('ud-email').textContent = u.email;
+    if (u.created_at) {
+        const since = new Date(u.created_at.replace(' ', 'T'))
+            .toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+        document.getElementById('ud-since').textContent = `SINCE ${since.toUpperCase()}`;
+    }
+}
+
+async function loadStats() {
+    const data = await fetchUserStats();
+    document.getElementById('stat-days').textContent  = data.days_present ?? '—';
+    document.getElementById('stat-avg').textContent   = fmtMins(data.avg_minutes);
+    document.getElementById('stat-total').textContent = fmtMins(data.total_minutes);
+
+    if (data.last_seen) {
+        const d = new Date(data.last_seen.replace(' ', 'T'));
+        const isToday = d.toDateString() === new Date().toDateString();
+        document.getElementById('stat-last').textContent = isToday
+            ? `TODAY ${data.last_seen.slice(11, 16)}`
+            : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase();
+    }
+}
+
+async function loadCards() {
+    const data = await fetchUserCards();
+    const cards = data.cards || [];
+    document.getElementById('ud-card-count').textContent = `(${cards.length})`;
+
+    const container = document.getElementById('ud-cards-list');
+    container.innerHTML = '';
+
+    if (cards.length === 0) {
+        container.innerHTML = '<div class="ud-no-cards">No cards assigned</div>';
+        return;
+    }
+
+    cards.forEach(c => {
+        const item = document.createElement('div');
+        item.className = 'ud-card-item';
+        item.innerHTML = `
+            <div>
+                <div class="ud-card-uid">${c.card_uid}</div>
+                ${c.description ? `<div class="ud-card-desc">${c.description}</div>` : ''}
+            </div>
+            <span class="card-status-badge ${c.is_active ? 'badge-active' : 'badge-inactive'}">
+                <span class="badge-dot"></span>
+                ${c.is_active ? 'VALID' : 'INVALID'}
+            </span>
+        `;
+        container.appendChild(item);
+    });
 }
 
 
@@ -248,6 +318,8 @@ function setViewMode(mode) {
 
 window.onload = async () => {
     await loadUserInfo();
+    loadStats();
+    loadCards();
 
     const now = new Date();
     await loadMonth(now.getFullYear(), now.getMonth() + 1);

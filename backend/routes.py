@@ -342,6 +342,87 @@ def get_present_users():
     return {"users": [dict(r) for r in rows]}
 
 
+@router.get("/user/{user_id}/stats")
+def get_user_stats(user_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    now = datetime.now()
+    month_start = datetime(now.year, now.month, 1)
+
+    cursor.execute(
+        """
+        SELECT e.event_time, e.event_type
+        FROM events e
+        JOIN cards c ON e.card_id = c.id
+        WHERE c.user_id = ? AND e.event_time >= ? AND e.event_type != 'rejected'
+        ORDER BY e.event_time ASC
+        """,
+        (user_id, month_start),
+    )
+    events = cursor.fetchall()
+
+    by_date = {}
+    for e in events:
+        date, etype = e["event_time"][:10], e["event_type"]
+        if date not in by_date:
+            by_date[date] = {}
+        if etype == "in" and "in" not in by_date[date]:
+            by_date[date]["in"] = e["event_time"][11:16]
+        if etype == "out":
+            by_date[date]["out"] = e["event_time"][11:16]
+
+    days_present = sum(1 for d in by_date.values() if "in" in d)
+
+    durations = []
+    for d in by_date.values():
+        if "in" in d and "out" in d:
+            ih, im = map(int, d["in"].split(":"))
+            oh, om = map(int, d["out"].split(":"))
+            dur = (oh * 60 + om) - (ih * 60 + im)
+            if dur > 0:
+                durations.append(dur)
+
+    avg_minutes   = round(sum(durations) / len(durations)) if durations else None
+    total_minutes = sum(durations)
+
+    cursor.execute(
+        """
+        SELECT e.event_time FROM events e
+        JOIN cards c ON e.card_id = c.id
+        WHERE c.user_id = ? AND e.event_type = 'in'
+        ORDER BY e.event_time DESC LIMIT 1
+        """,
+        (user_id,),
+    )
+    last_row = cursor.fetchone()
+    conn.close()
+
+    return {
+        "days_present": days_present,
+        "avg_minutes": avg_minutes,
+        "total_minutes": total_minutes,
+        "last_seen": last_row["event_time"] if last_row else None,
+    }
+
+
+@router.get("/user/{user_id}/cards")
+def get_user_cards_list(user_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT card_uid, description, is_active
+        FROM cards WHERE user_id = ?
+        ORDER BY is_active DESC, created_at ASC
+        """,
+        (user_id,),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return {"cards": [dict(r) for r in rows]}
+
+
 @router.get("/user")
 def get_users():
     conn = get_connection()

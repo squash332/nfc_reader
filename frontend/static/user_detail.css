@@ -1,65 +1,180 @@
 /* ── LAYOUT ── */
 .ud-layout {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     flex: 1;
     overflow: hidden;
 }
 
-/* ── USER INFO BAR ── */
-.ud-infobar {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 12px 28px;
-    background: var(--bg-panel);
-    border-bottom: 1px solid var(--border);
+/* ── SIDEBAR ── */
+.ud-sidebar {
+    width: 256px;
     flex-shrink: 0;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
+.ud-sidebar::-webkit-scrollbar { width: 4px; }
+.ud-sidebar::-webkit-scrollbar-thumb { background: var(--border-lit); border-radius: 2px; }
+
 .ud-back {
+    display: block;
+    padding: 12px 20px;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 2px;
     color: var(--text-dim);
     text-decoration: none;
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
     transition: color 0.15s;
 }
 .ud-back:hover { color: var(--amber); }
 
-.ud-identity {
+.ud-section {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.ud-section-title {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
     display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ── PROFILE ── */
+.ud-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--amber-glow);
+    border: 1px solid var(--amber-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--amber);
+    letter-spacing: 1px;
+    margin-bottom: 12px;
 }
 
 .ud-name {
     font-family: var(--font-display);
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     color: var(--text-primary);
-    line-height: 1.1;
+    line-height: 1.2;
+    margin-bottom: 6px;
 }
 
-.ud-meta {
+.ud-field {
     font-size: 10px;
     color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+}
+
+.ud-email-field {
+    color: var(--text-dim);
+    word-break: break-all;
+}
+
+.ud-since {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    margin-top: 6px;
+}
+
+/* ── STATS ── */
+.ud-stat {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.ud-stat-last { border-bottom: none; }
+
+.ud-stat-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+}
+
+.ud-stat-value {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-primary);
+}
+
+/* ── CARDS LIST ── */
+.ud-section-cards { flex: 1; }
+
+.ud-card-count {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    font-weight: 400;
+}
+
+.ud-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ud-card-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.ud-card-uid {
+    font-size: 11px;
+    color: var(--amber);
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.ud-card-desc {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+}
+
+.ud-no-cards {
+    font-size: 11px;
+    color: var(--text-dim);
     letter-spacing: 1px;
 }
 
-.ud-cards-badge {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: var(--text-dim);
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    padding: 5px 12px;
-    border-radius: var(--radius);
-    flex-shrink: 0;
+/* ── MAIN (calendar side) ── */
+.ud-main {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 /* ── CALENDAR CONTROLS ── */
@@ -201,7 +316,7 @@
     opacity: 0.35;
 }
 
-.cal-day.has-full   { border-left-color: var(--green); }
+.cal-day.has-full    { border-left-color: var(--green); }
 .cal-day.has-in-only { border-left-color: var(--amber); }
 
 .cal-day.is-today {
