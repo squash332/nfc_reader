@@ -224,28 +224,27 @@ def get_user_tags(full_name: str):
         "SELECT id, full_name FROM users WHERE full_name LIKE ?",
         (f"%{full_name}%",),
     )
-    user = cursor.fetchone()
+    users = cursor.fetchall()
 
-    if not user:
+    if not users:
         conn.close()
         return {"error": "No user found."}
 
-    cursor.execute("SELECT * FROM cards WHERE user_id = ?", (user["id"],))
-    user_cards = cursor.fetchall()
-
-    return {
-        "tags": [
-            {
+    tags = []
+    for user in users:
+        cursor.execute("SELECT * FROM cards WHERE user_id = ?", (user["id"],))
+        for r in cursor.fetchall():
+            tags.append({
                 "card_uid": r["card_uid"],
                 "description": r["description"],
                 "id": r["id"],
                 "full_name": user["full_name"],
                 "user_id": r["user_id"],
                 "is_active": r["is_active"],
-            }
-            for r in user_cards
-        ]
-    }
+            })
+
+    conn.close()
+    return {"tags": tags}
 
 
 @router.get("/users", response_class=HTMLResponse)
