@@ -111,7 +111,7 @@ function renderUserCards(cards) {
         group.cards.forEach(card => {
             const item = document.createElement('div');
             item.className = 'user-card-item';
-            const status = card.is_active ? 'ACTIVE' : 'INACTIVE';
+            const status = card.is_active ? 'VALID' : 'INVALID';
             item.innerHTML = `
                 <span class="card-uid">${card.card_uid}</span>
                 <span class="card-lookup-meta">${card.description ?? '—'} · ${status}</span>

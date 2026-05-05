@@ -150,7 +150,7 @@ function createCardElement(tag, index) {
         <div>
             <span class="card-status-badge ${isActive ? 'badge-active' : 'badge-inactive'}">
                 <span class="badge-dot"></span>
-                ${isActive ? 'ACTIVE' : 'INACTIVE'}
+                ${isActive ? 'VALID' : 'INVALID'}
             </span>
         </div>
         <div class="card-actions">
@@ -280,8 +280,8 @@ function enterEditMode(tag) {
             <input class="edit-input edit-desc" type="text" placeholder="Description" value="${tag.description ?? ''}">
             <input class="edit-input edit-user" type="email" placeholder="Assign by email" value="${tag.email ?? ''}">
             <select class="edit-select">
-                <option value="1" ${tag.is_active ? 'selected' : ''}>ACTIVE</option>
-                <option value="0" ${!tag.is_active ? 'selected' : ''}>INACTIVE</option>
+                <option value="1" ${tag.is_active ? 'selected' : ''}>VALID</option>
+                <option value="0" ${!tag.is_active ? 'selected' : ''}>INVALID</option>
             </select>
             <button class="edit-save">SAVE</button>
             <button class="edit-cancel">CANCEL</button>
