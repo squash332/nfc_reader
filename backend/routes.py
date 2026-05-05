@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter
@@ -284,13 +285,26 @@ def get_user_info(user_id: int):
 
 
 @router.get("/user/{user_id}/events")
-def get_user_events(user_id: int, month: str):
-    try:
-        year, mon = map(int, month.split("-"))
-        since = datetime(year, mon, 1)
-        until = datetime(year + 1, 1, 1) if mon == 12 else datetime(year, mon + 1, 1)
-    except (ValueError, AttributeError):
-        return {"error": "Invalid month format. Use YYYY-MM."}
+def get_user_events(user_id: int, month: str = None, week: str = None):
+    if week:
+        m = re.match(r'^(\d{4})-W(\d{1,2})$', week)
+        if not m:
+            return {"error": "Invalid week format. Use YYYY-WNN."}
+        year, wnum = int(m.group(1)), int(m.group(2))
+        jan4 = datetime(year, 1, 4)
+        jan4_dow = jan4.isoweekday()
+        monday = jan4 - timedelta(days=jan4_dow - 1) + timedelta(weeks=wnum - 1)
+        since = monday
+        until = monday + timedelta(days=7)
+    elif month:
+        try:
+            year, mon = map(int, month.split("-"))
+            since = datetime(year, mon, 1)
+            until = datetime(year + 1, 1, 1) if mon == 12 else datetime(year, mon + 1, 1)
+        except (ValueError, AttributeError):
+            return {"error": "Invalid month format. Use YYYY-MM."}
+    else:
+        return {"error": "Either month or week parameter is required."}
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -306,6 +320,26 @@ def get_user_events(user_id: int, month: str):
     rows = cursor.fetchall()
     conn.close()
     return {"events": [dict(r) for r in rows]}
+
+
+@router.get("/present")
+def get_present_users():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT u.id, u.full_name, u.email, u.position,
+               (SELECT e.event_time FROM events e
+                WHERE e.user_id = u.id AND e.event_type != 'rejected'
+                ORDER BY e.event_time DESC LIMIT 1) as entered_at
+        FROM users u
+        WHERE (SELECT e.event_type FROM events e
+               WHERE e.user_id = u.id AND e.event_type != 'rejected'
+               ORDER BY e.event_time DESC LIMIT 1) = 'in'
+        ORDER BY entered_at ASC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+    return {"users": [dict(r) for r in rows]}
 
 
 @router.get("/user")

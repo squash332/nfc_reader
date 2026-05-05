@@ -43,45 +43,20 @@
         <!-- ── MAIN ── -->
         <div class="main">
 
-            <!-- ── LEFT: REGISTER PANEL ── -->
-            <aside class="register-panel">
+            <!-- ── LEFT: PRESENCE PANEL ── -->
+            <aside class="presence-panel">
 
                 <div class="panel-heading">
-                    <div class="panel-title">REGISTER CARD</div>
-                    <div class="panel-sub">Scan or enter card details</div>
+                    <div class="panel-title">IN BUILDING</div>
+                    <div class="panel-sub" id="presence-count">Loading…</div>
                 </div>
 
-                <!-- scan zone -->
-                <div class="scan-zone" id="scan-zone">
-                    <div class="scan-ring outer"></div>
-                    <div class="scan-ring inner"></div>
-                    <div class="scan-icon">◉</div>
-                    <div class="scan-label">RFID READY</div>
+                <ul id="presence-list" class="presence-list"></ul>
+
+                <div id="presence-empty" class="presence-empty" style="display:none">
+                    <span class="presence-empty-icon">◌</span>
+                    <span>Building is empty.</span>
                 </div>
-
-                <!-- form fields -->
-                <div class="form-group">
-                    <label class="form-label" for="card-uid">CARD UID</label>
-                    <input type="text" id="card-uid" class="form-input" placeholder="e.g. A3:F2:01:CC" autocomplete="off" spellcheck="false">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="card-description">DESCRIPTION</label>
-                    <input type="text" id="card-description" class="form-input" placeholder="e.g. Main entrance card" autocomplete="off">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="card-user">USER EMAIL <span class="form-label-optional">(optional)</span></label>
-                    <input type="email" id="card-user" class="form-input" placeholder="e.g. john@example.com" autocomplete="off">
-                </div>
-
-                <button id="add-btn" class="add-btn">
-                    <span class="add-btn-icon">＋</span>
-                    REGISTER CARD
-                </button>
-
-                <!-- feedback message -->
-                <div id="message" class="message"></div>
 
             </aside>
 
@@ -97,6 +72,7 @@
                         <input type="text" id="registry-search" class="registry-search" placeholder="Search UID or user…" autocomplete="off">
                         <span class="search-icon">⌕</span>
                     </div>
+                    <button id="open-register" class="register-btn">＋ REGISTER</button>
                     <div class="registry-legend">
                         <span class="legend-item legend-active">VALID</span>
                         <span class="legend-item legend-inactive">INVALID</span>
@@ -123,6 +99,41 @@
 
         </div>
 
+    </div>
+
+    <!-- ── REGISTER MODAL ── -->
+    <div id="register-modal" class="modal-overlay" style="display:none">
+        <div class="modal">
+            <div class="modal-header">
+                <div>
+                    <div class="panel-title">REGISTER CARD</div>
+                    <div class="panel-sub">Enter card details</div>
+                </div>
+                <button class="modal-close" id="modal-close">✕</button>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="card-uid">CARD UID</label>
+                <input type="text" id="card-uid" class="form-input" placeholder="e.g. A3:F2:01:CC" autocomplete="off" spellcheck="false">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="card-description">DESCRIPTION</label>
+                <input type="text" id="card-description" class="form-input" placeholder="e.g. Main entrance card" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="card-user">USER EMAIL <span class="form-label-optional">(optional)</span></label>
+                <input type="email" id="card-user" class="form-input" placeholder="e.g. john@example.com" autocomplete="off">
+            </div>
+
+            <button id="add-btn" class="add-btn">
+                <span class="add-btn-icon">＋</span>
+                REGISTER CARD
+            </button>
+
+            <div id="message" class="message"></div>
+        </div>
     </div>
 
     <script type="module" src="static/script.js"></script>

@@ -201,6 +201,101 @@ html, body {
     margin-top: 2px;
 }
 
+/* ── PRESENCE PANEL (left) ── */
+.presence-panel {
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: hidden;
+}
+
+.presence-list {
+    list-style: none;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.presence-list::-webkit-scrollbar { width: 4px; }
+.presence-list::-webkit-scrollbar-thumb { background: var(--border-lit); border-radius: 2px; }
+
+.presence-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--green);
+    border-radius: var(--radius);
+    transition: background 0.1s;
+    animation: row-in 0.2s ease both;
+}
+
+.presence-item:hover { background: var(--bg-hover); }
+
+.presence-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+}
+
+.presence-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.15s;
+}
+
+.presence-name:hover { color: var(--amber); }
+
+.presence-meta {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.presence-time {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: 1px;
+    flex-shrink: 0;
+}
+
+.presence-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 12px;
+    color: var(--text-dim);
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+.presence-empty-icon {
+    font-size: 24px;
+    animation: spin 3s linear infinite;
+    display: inline-block;
+}
+
 /* ── REGISTER PANEL (left) ── */
 .register-panel {
     background: var(--bg-panel);
@@ -386,6 +481,87 @@ html, body {
     background: var(--red-glow);
     border: 1px solid var(--red-dim);
     color: var(--red);
+}
+
+/* ── REGISTER BUTTON ── */
+.register-btn {
+    background: var(--amber-glow);
+    border: 1px solid var(--amber-dim);
+    color: var(--amber);
+    padding: 7px 14px;
+    border-radius: var(--radius);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+}
+
+.register-btn:hover {
+    background: rgba(240, 168, 50, 0.28);
+    box-shadow: 0 0 16px var(--amber-glow);
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 8000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fade-in 0.15s ease;
+}
+
+.modal {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-lit);
+    border-radius: var(--radius);
+    padding: 28px;
+    width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+    animation: modal-in 0.15s ease;
+}
+
+@keyframes modal-in {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: none; }
+}
+
+.modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 14px;
+}
+
+.modal-close {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.modal-close:hover {
+    border-color: var(--red-dim);
+    color: var(--red);
+    background: var(--red-glow);
 }
 
 /* ── REGISTRY PANEL (right) ── */

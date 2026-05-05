@@ -4,6 +4,52 @@ const apiUrl = 'http://127.0.0.1:8000/tag';
 let allTags = [];
 let allUsers = [];
 
+// ── PRESENCE PANEL ────────────────────────────────────────────────────────────
+
+async function fetchPresent() {
+    const res = await fetch('/present');
+    return res.json();
+}
+
+function renderPresence(users) {
+    const list  = document.getElementById('presence-list');
+    const empty = document.getElementById('presence-empty');
+    const count = document.getElementById('presence-count');
+    list.innerHTML = '';
+
+    if (!users || users.length === 0) {
+        count.textContent = 'building empty';
+        empty.style.display = 'flex';
+        return;
+    }
+
+    empty.style.display = 'none';
+    count.textContent = `${users.length} inside`;
+    users.forEach(u => {
+        const li = document.createElement('li');
+        li.className = 'presence-item';
+        const time = u.entered_at ? u.entered_at.slice(11, 16) : '—';
+        const meta = [u.position, u.email].filter(Boolean).join(' · ');
+        li.innerHTML = `
+            <div class="presence-info">
+                <a href="/user/${u.id}" class="presence-name">${u.full_name}</a>
+                ${meta ? `<div class="presence-meta">${meta}</div>` : ''}
+            </div>
+            <div class="presence-time">▲ ${time}</div>
+        `;
+        list.appendChild(li);
+    });
+}
+
+async function loadPresence() {
+    try {
+        const data = await fetchPresent();
+        renderPresence(data.users || []);
+    } catch {
+        document.getElementById('presence-count').textContent = 'error loading';
+    }
+}
+
 // ── API ───────────────────────────────────────────────────────────────────────
 
 export async function fetchTags() {
@@ -33,21 +79,6 @@ async function updateTag(card_uid, description, is_active, email) {
 
 
 // ── UI HELPERS ────────────────────────────────────────────────────────────────
-
-function setScanZone(state, label) {
-    // state: '' | 'success' | 'error'
-    const zone = document.getElementById('scan-zone');
-    const labelEl = zone.querySelector('.scan-label');
-    zone.className = 'scan-zone' + (state ? ' ' + state : '');
-    labelEl.textContent = label;
-    if (state) {
-        clearTimeout(zone._timeout);
-        zone._timeout = setTimeout(() => {
-            zone.className = 'scan-zone';
-            labelEl.textContent = 'RFID READY';
-        }, 2000);
-    }
-}
 
 function updateCardCount(tags) {
     const el = document.getElementById('card-count');
@@ -216,43 +247,47 @@ async function loadTags() {
     }
 }
 
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+
+function openModal() {
+    document.getElementById('register-modal').style.display = 'flex';
+    document.getElementById('card-uid').focus();
+}
+
+function closeModal() {
+    document.getElementById('register-modal').style.display = 'none';
+    document.getElementById('card-uid').value = '';
+    document.getElementById('card-description').value = '';
+    document.getElementById('card-user').value = '';
+    const msg = document.getElementById('message');
+    msg.className = 'message';
+    msg.textContent = '';
+}
+
 async function handleAdd() {
-    const uidInput = document.getElementById('card-uid');
-    const descInput = document.getElementById('card-description');
-    const userInput = document.getElementById('card-user');
-    const card_uid = uidInput.value.trim();
-    const desc = descInput.value.trim();
-    const email = userInput.value.trim();
+    const card_uid = document.getElementById('card-uid').value.trim();
+    const desc     = document.getElementById('card-description').value.trim();
+    const email    = document.getElementById('card-user').value.trim();
 
     if (!card_uid || !desc) {
         showMessage('Both UID and description are required.', true);
-        setScanZone('error', 'MISSING DATA');
         return;
     }
 
-    const res = await createTag(card_uid, desc, email);
+    const res  = await createTag(card_uid, desc, email);
     const data = await res.json();
 
     if (data.status === 'ok') {
         showMessage(`Card '${card_uid}' registered${email ? ` — assigned to ${email}` : ''}.`);
-        setScanZone('success', 'REGISTERED');
-        uidInput.value = '';
-        descInput.value = '';
-        userInput.value = '';
-
+        loadTags();
+        setTimeout(closeModal, 1200);
     } else if (data.status === 'duplicate') {
         showMessage(`UID '${card_uid}' already exists.`, true);
-        setScanZone('error', 'DUPLICATE UID');
     } else if (data.status === 'user_not_found') {
         showMessage(`No user with email '${data.email}'.`, true);
-        setScanZone('error', 'USER NOT FOUND');
     } else {
         showMessage(data.message || 'Unknown error.', true);
-        setScanZone('error', 'ERROR');
     }
-
-
-    loadTags();
 }
 
 async function handleRemove(card_uid) {
@@ -322,21 +357,27 @@ async function handleSave(card_uid, description, is_active, email) {
 
 window.onload = async () => {
     loadTags();
+    loadPresence();
+    setInterval(loadPresence, 30000);
+
     fetch('http://127.0.0.1:8000/user').then(r => r.json()).then(d => { allUsers = d.users || []; });
 
     attachEmailAutocomplete(document.getElementById('card-user'));
-    document.getElementById('add-btn').addEventListener('click', handleAdd);
 
-    // also allow Enter key from either input field
+    document.getElementById('open-register').addEventListener('click', openModal);
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('register-modal').addEventListener('click', e => {
+        if (e.target === e.currentTarget) closeModal();
+    });
+    document.getElementById('add-btn').addEventListener('click', handleAdd);
     ['card-uid', 'card-description', 'card-user'].forEach(id => {
         document.getElementById(id).addEventListener('keydown', e => {
             if (e.key === 'Enter') handleAdd();
+            if (e.key === 'Escape') closeModal();
         });
     });
 
-    // live client-side search
     document.getElementById('registry-search').addEventListener('input', e => {
         applySearch(e.target.value);
     });
-
 };
