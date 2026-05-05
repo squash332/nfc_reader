@@ -190,125 +190,108 @@ function applyEventFilter(type) {
 
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
+// type="module" scripts are deferred — DOM is ready and flatpickr (regular script) has
+// already executed by the time this runs, so no wrapper needed.
 
-window.onload = () => {
-    // Flatpickr — altInput: true hides the original input and shows a pretty one.
-    // The original input (.date-control-from / .date-control-to) still receives
-    // the value in dateFormat ("Y-m-d H:i"), which is exactly what the backend expects.
-    const fpConfig = {
-        enableTime: true,
-        dateFormat: 'Y-m-d H:i',
-        altInput: true,
-        altFormat: 'F j, Y (h:i K)',
-        time_24hr: false,
-    };
-    flatpickr('.date-control-from', fpConfig);
-    flatpickr('.date-control-to', fpConfig);
+const fpConfig = {
+    enableTime: true,
+    dateFormat: 'Y-m-d H:i',
+    altInput: true,
+    altFormat: 'F j, Y (h:i K)',
+    time_24hr: false,
+};
+flatpickr('.date-control-from', fpConfig);
+flatpickr('.date-control-to', fpConfig);
 
-    // initial load
+loadDetails('month');
+setRangeLabel('Last 30 days');
+
+document.getElementById('day-btn').addEventListener('click', () => {
+    activeRange = 'day';
+    setActiveRange('day-btn', 'Last 24 hours');
+    loadDetails('day');
+});
+
+document.getElementById('week-btn').addEventListener('click', () => {
+    activeRange = 'week';
+    setActiveRange('week-btn', 'Last 7 days');
+    loadDetails('week');
+});
+
+document.getElementById('month-btn').addEventListener('click', () => {
+    activeRange = 'month';
+    setActiveRange('month-btn', 'Last 30 days');
     loadDetails('month');
-    setRangeLabel('Last 30 days');
+});
 
-    // range buttons
-    document.getElementById('day-btn').addEventListener('click', () => {
-        activeRange = 'day';
-        setActiveRange('day-btn', 'Last 24 hours');
-        loadDetails('day');
-    });
+document.getElementById('get-data-btn').addEventListener('click', () => {
+    const from = document.querySelector('.date-control-from').value;
+    const to = document.querySelector('.date-control-to').value;
 
-    document.getElementById('week-btn').addEventListener('click', () => {
-        activeRange = 'week';
-        setActiveRange('week-btn', 'Last 7 days');
-        loadDetails('week');
-    });
-
-    document.getElementById('month-btn').addEventListener('click', () => {
-        activeRange = 'month';
-        setActiveRange('month-btn', 'Last 30 days');
-        loadDetails('month');
-    });
-
-    // custom date range
-    document.getElementById('get-data-btn').addEventListener('click', () => {
-        // Flatpickr writes the dateFormat value to the original (hidden) input.
-        // The altInput is only for display — always read from the original.
-        const from = document.querySelector('.date-control-from').value;
-        const to = document.querySelector('.date-control-to').value;
-
-        if (!from || !to) {
-            // visually hint the empty fields instead of an alert
-            ['.date-control-from', '.date-control-to'].forEach(sel => {
-                const altEl = document.querySelector(`${sel} + input`); // Flatpickr's altInput sibling
-                const target = altEl || document.querySelector(sel);
-                target.style.borderColor = 'var(--red)';
-                setTimeout(() => target.style.borderColor = '', 1500);
-            });
-            return;
-        }
-
-        activeEventType = '';
-        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-        document.querySelector('.filter-tab[data-type=""]').classList.add('active');
-
-        activeRange = 'custom';
-        // from/to are already "YYYY-MM-DD HH:MM" — exactly what the backend strptime expects
-        const [fromDate, toDate] = [new Date(from), new Date(to)];
-        const opts = { day: 'numeric', month: 'short', year: 'numeric' };
-        setRangeLabel(`${fromDate.toLocaleDateString(undefined, opts)} → ${toDate.toLocaleDateString(undefined, opts)}`);
-        loadDetails('custom', from, to);
-
-        document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
-    });
-
-    // clear custom range btn
-    document.getElementById('clear-date-btn').addEventListener('click', () => {
-        // clear flatpickr inputs
-        document.querySelector('.date-control-from')._flatpickr.clear();
-        document.querySelector('.date-control-to')._flatpickr.clear();
-
-        // reset to month and ALL
-        activeRange = 'month';
-        activeEventType = '';
-        setActiveRange('month-btn', 'Last 30 days');
-        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-        document.querySelector('.filter-tab[data-type=""]').classList.add('active');
-
-        loadDetails('month');
-    });
-
-    // event type filter tabs
-    document.querySelectorAll('.filter-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            applyEventFilter(tab.dataset.type);
+    if (!from || !to) {
+        ['.date-control-from', '.date-control-to'].forEach(sel => {
+            const altEl = document.querySelector(`${sel} + input`);
+            const target = altEl || document.querySelector(sel);
+            target.style.borderColor = 'var(--red)';
+            setTimeout(() => target.style.borderColor = '', 1500);
         });
-    });
+        return;
+    }
 
-    // user search on Enter
-    document.getElementById('search-user-input').addEventListener('keydown', e => {
-        if (e.key === 'Enter') {
-            const name = e.target.value.trim();
-            if (name) {
-                searchByUser(name);
-                e.target.value = '';
-            }
+    activeEventType = '';
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.filter-tab[data-type=""]').classList.add('active');
+
+    activeRange = 'custom';
+    const [fromDate, toDate] = [new Date(from), new Date(to)];
+    const opts = { day: 'numeric', month: 'short', year: 'numeric' };
+    setRangeLabel(`${fromDate.toLocaleDateString(undefined, opts)} → ${toDate.toLocaleDateString(undefined, opts)}`);
+    loadDetails('custom', from, to);
+
+    document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+});
+
+document.getElementById('clear-date-btn').addEventListener('click', () => {
+    document.querySelector('.date-control-from')._flatpickr.clear();
+    document.querySelector('.date-control-to')._flatpickr.clear();
+
+    activeRange = 'month';
+    activeEventType = '';
+    setActiveRange('month-btn', 'Last 30 days');
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.filter-tab[data-type=""]').classList.add('active');
+
+    loadDetails('month');
+});
+
+document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        applyEventFilter(tab.dataset.type);
+    });
+});
+
+document.getElementById('search-user-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        const name = e.target.value.trim();
+        if (name) {
+            searchByUser(name);
+            e.target.value = '';
         }
-    });
+    }
+});
 
-    // filter log by user — live on Enter or clear on empty
-    document.getElementById('filter-user-input').addEventListener('input', e => {
+document.getElementById('filter-user-input').addEventListener('input', e => {
     if (e.target.value === '') {
         activeUserFilter = '';
         loadDetails(activeRange);
     }
-    });
+});
 
-    document.getElementById('filter-user-input').addEventListener('keydown', e => {
+document.getElementById('filter-user-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') {
         activeUserFilter = e.target.value.trim();
         loadDetails(activeRange);
     }
-    });
-
-};
+});

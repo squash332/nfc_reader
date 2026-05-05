@@ -77,7 +77,11 @@ def init_db():
             ALTER TABLE events_new RENAME TO events;
         """)
 
-    # test data
-      
+    cursor.executescript("""
+        CREATE INDEX IF NOT EXISTS idx_events_card_id    ON events(card_id);
+        CREATE INDEX IF NOT EXISTS idx_events_event_time ON events(event_time);
+        CREATE INDEX IF NOT EXISTS idx_cards_user_id     ON cards(user_id);
+    """)
+
     conn.commit()
     conn.close()

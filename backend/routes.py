@@ -73,9 +73,9 @@ def get_tags():
     cursor.execute(
         """
         SELECT c.card_uid, c.description, c.id, c.user_id, c.is_active,
-               (SELECT u.full_name FROM users u WHERE u.id = c.user_id) AS full_name,
-               (SELECT u.email     FROM users u WHERE u.id = c.user_id) AS email
+               u.full_name, u.email
         FROM cards c
+        LEFT JOIN users u ON u.id = c.user_id
     """
     )
 
@@ -190,10 +190,10 @@ def show_details(
     # base query
     query = """
         SELECT e.event_time, e.event_type, c.card_uid, c.description, c.user_id,
-        (SELECT u.full_name FROM users u WHERE u.id = c.user_id) AS full_name,
-        (SELECT u.email     FROM users u WHERE u.id = c.user_id) AS email
+               u.full_name, u.email
         FROM events e
         JOIN cards c ON e.card_id = c.id
+        LEFT JOIN users u ON u.id = c.user_id
         WHERE e.event_time >= ? AND e.event_time < ?
     """
     params = [since, until]
@@ -204,7 +204,7 @@ def show_details(
         params.append(event_type)
 
     if full_name:
-        query += " AND (SELECT u.full_name FROM users u WHERE u.id = c.user_id) LIKE ?"
+        query += " AND u.full_name LIKE ?"
         params.append(f"%{full_name}%")
 
     query += " ORDER BY e.event_time DESC"
