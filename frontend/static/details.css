@@ -462,7 +462,7 @@ html, body {
 }
 
 .card-manage-link {
-    color: var(--text-dim);
+    color: var(--text-primary);
     font-size: 9px;
     font-weight: 700;
     letter-spacing: 1px;

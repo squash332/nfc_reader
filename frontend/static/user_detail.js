@@ -118,6 +118,7 @@ async function loadCards() {
             <div>
                 <div class="ud-card-uid">${c.card_uid}</div>
                 ${c.description ? `<div class="ud-card-desc">${c.description}</div>` : ''}
+                <a href="/?card=${encodeURIComponent(c.card_uid)}" class="ud-card-manage">MANAGE →</a>
             </div>
             <span class="card-status-badge ${c.is_active ? 'badge-active' : 'badge-inactive'}">
                 <span class="badge-dot"></span>
