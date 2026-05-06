@@ -77,6 +77,36 @@ def init_db():
             ALTER TABLE events_new RENAME TO events;
         """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS accounts (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id       INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            email         TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role          TEXT NOT NULL DEFAULT 'user'
+                          CHECK(role IN ('admin', 'user')),
+            created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='accounts'")
+    accounts_schema = cursor.fetchone()
+    if accounts_schema and 'SET NULL' in accounts_schema[0]:
+        cursor.executescript("""
+            CREATE TABLE accounts_new (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id       INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                email         TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                role          TEXT NOT NULL DEFAULT 'user'
+                              CHECK(role IN ('admin', 'user')),
+                created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            INSERT INTO accounts_new SELECT * FROM accounts;
+            DROP TABLE accounts;
+            ALTER TABLE accounts_new RENAME TO accounts;
+        """)
+
     cursor.executescript("""
         CREATE INDEX IF NOT EXISTS idx_events_card_id    ON events(card_id);
         CREATE INDEX IF NOT EXISTS idx_events_event_time ON events(event_time);

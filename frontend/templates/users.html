@@ -25,16 +25,23 @@
                 </div>
             </div>
             <nav class="topbar-nav">
-                <a href="/" class="nav-item">
+                <a href="/" class="nav-item nav-admin">
                     <span class="nav-icon">⊞</span> Tag Manager
                 </a>
-                <a href="/details" class="nav-item">
+                <a href="/details" class="nav-item nav-admin">
                     <span class="nav-icon">◧</span> Access Log
                 </a>
-                <span class="nav-item active">
+                <span class="nav-item active nav-admin">
                     <span class="nav-icon">◉</span> Users
                 </span>
+                <a href="/register" class="nav-item nav-admin">
+                    <span class="nav-icon">⊕</span> Accounts
+                </a>
             </nav>
+            <div class="topbar-user">
+                <span class="topbar-email" id="topbar-email"></span>
+                <button class="topbar-logout-btn" id="topbar-logout">LOGOUT</button>
+            </div>
             <div class="topbar-status">
                 <span class="status-dot"></span>
                 <span class="status-text">LIVE</span>

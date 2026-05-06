@@ -6,14 +6,114 @@ from fastapi.responses import HTMLResponse
 import os
 from typing import Optional
 
+from fastapi import Response, Request
+
+from auth import hash_pw, check_pw, make_token, read_token
 from database import get_connection
-from models import ScanEvent, Tag, UpdateTag, CreateUser, UpdateUser
+from models import ScanEvent, Tag, UpdateTag, CreateUser, UpdateUser, LoginData, RegisterData
 
 router = APIRouter()
 
 static_directory = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../frontend/static"
 )
+
+
+@router.get("/login", response_class=HTMLResponse)
+async def login_page():
+    path = os.path.join(static_directory, "../templates/login.html")
+    with open(path) as f:
+        return HTMLResponse(content=f.read())
+
+
+@router.get("/register", response_class=HTMLResponse)
+async def register_page():
+    path = os.path.join(static_directory, "../templates/register.html")
+    with open(path) as f:
+        return HTMLResponse(content=f.read())
+
+
+@router.post("/auth/login")
+def auth_login(data: LoginData, response: Response):
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM accounts WHERE email = ?", (data.email.strip(),))
+    account = cursor.fetchone()
+    conn.close()
+
+    if not account or not check_pw(data.password, account["password_hash"]):
+        return {"status": "invalid_credentials"}
+
+    token = make_token(account["id"], account["role"], account["user_id"])
+    response.set_cookie("token", token, httponly=True, samesite="lax", max_age=86400)
+    return {"status": "ok", "role": account["role"], "user_id": account["user_id"]}
+
+
+@router.post("/auth/logout")
+def auth_logout(response: Response):
+    response.delete_cookie("token")
+    return {"status": "ok"}
+
+
+@router.get("/auth/me")
+def auth_me(request: Request):
+    token = request.cookies.get("token")
+    if not token:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=401)
+    try:
+        payload = read_token(token)
+    except Exception:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=401)
+
+    conn   = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT email, role, user_id FROM accounts WHERE id = ?", (int(payload["sub"]),))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=401)
+    return {"email": row["email"], "role": row["role"], "user_id": row["user_id"]}
+
+
+@router.post("/auth/register")
+def auth_register(data: RegisterData, request: Request):
+    conn   = get_connection()
+    cursor = conn.cursor()
+
+    # First account becomes admin; subsequent ones require admin auth
+    cursor.execute("SELECT COUNT(*) AS cnt FROM accounts")
+    count = cursor.fetchone()["cnt"]
+
+    if count > 0:
+        token = request.cookies.get("token")
+        if not token:
+            conn.close()
+            return {"status": "forbidden"}
+        try:
+            payload = read_token(token)
+            if payload.get("role") != "admin":
+                conn.close()
+                return {"status": "forbidden"}
+        except Exception:
+            conn.close()
+            return {"status": "forbidden"}
+
+    cursor.execute("SELECT id FROM accounts WHERE email = ?", (data.email.strip(),))
+    if cursor.fetchone():
+        conn.close()
+        return {"status": "duplicate"}
+
+    role = "admin" if count == 0 else data.role
+    cursor.execute(
+        "INSERT INTO accounts (user_id, email, password_hash, role) VALUES (?, ?, ?, ?)",
+        (data.user_id, data.email.strip(), hash_pw(data.password), role),
+    )
+    conn.commit()
+    conn.close()
+    return {"status": "ok"}
 
 
 @router.get("/", response_class=HTMLResponse)

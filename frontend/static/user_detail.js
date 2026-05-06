@@ -1,4 +1,7 @@
+import { initAuth } from './auth_guard.js';
+
 const userId = parseInt(window.location.pathname.split('/').pop(), 10);
+let authUser = null;
 
 let currentYear, currentMonth;
 let currentWeekMonday;
@@ -118,7 +121,7 @@ async function loadCards() {
             <div>
                 <div class="ud-card-uid">${c.card_uid}</div>
                 ${c.description ? `<div class="ud-card-desc">${c.description}</div>` : ''}
-                <a href="/?card=${encodeURIComponent(c.card_uid)}" class="ud-card-manage">MANAGE →</a>
+                ${authUser?.role !== 'user' ? `<a href="/?card=${encodeURIComponent(c.card_uid)}" class="ud-card-manage">MANAGE →</a>` : ''}
             </div>
             <span class="card-status-badge ${c.is_active ? 'badge-active' : 'badge-inactive'}">
                 <span class="badge-dot"></span>
@@ -318,6 +321,11 @@ function setViewMode(mode) {
 // ── INIT ──────────────────────────────────────────────────────────────────────
 
 window.onload = async () => {
+    authUser = await initAuth();
+    if (authUser?.role === 'user') {
+        const back = document.querySelector('.ud-back');
+        if (back) back.style.display = 'none';
+    }
     await loadUserInfo();
     loadStats();
     loadCards();

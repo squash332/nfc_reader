@@ -1,4 +1,5 @@
 import { showMessage } from "./utils.js";
+import { initAuth } from "./auth_guard.js";
 const apiUrl = 'http://127.0.0.1:8000/user';
 
 let allUsers = [];
@@ -210,7 +211,8 @@ async function handleSave(id, full_name, email, position) {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 
-window.onload = () => {
+window.onload = async () => {
+    await initAuth();
     loadUsers();
 
     document.getElementById('add-btn').addEventListener('click', handleAdd);

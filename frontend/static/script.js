@@ -1,4 +1,5 @@
 import { showMessage } from "./utils.js";
+import { initAuth } from "./auth_guard.js";
 const apiUrl = 'http://127.0.0.1:8000/tag';
 
 let allTags = [];
@@ -356,6 +357,7 @@ async function handleSave(card_uid, description, is_active, email) {
 // ── INIT ──────────────────────────────────────────────────────────────────────
 
 window.onload = async () => {
+    await initAuth();
     loadTags();
     loadPresence();
     setInterval(loadPresence, 30000);

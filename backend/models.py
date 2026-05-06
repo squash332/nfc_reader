@@ -27,3 +27,13 @@ class UpdateUser(BaseModel):
     full_name: Optional[str] = None
     email: Optional[str] = None
     position: Optional[str] = None
+
+class LoginData(BaseModel):
+    email: str
+    password: str
+
+class RegisterData(BaseModel):
+    email: str
+    password: str
+    role: str = 'user'
+    user_id: Optional[int] = None
