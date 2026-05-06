@@ -34,6 +34,8 @@ def init_db():
         cursor.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL"
         )
+    if users_schema and 'deleted_at' not in users_schema[0]:
+        cursor.execute("ALTER TABLE users ADD COLUMN deleted_at DATETIME")
 
     # card default inactive == 0 until admin changes it
     cursor.execute("""

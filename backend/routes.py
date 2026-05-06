@@ -141,7 +141,7 @@ def list_accounts():
 def delete_account(account_id: int):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT email, role FROM accounts WHERE id = ?", (account_id,))
+    cursor.execute("SELECT email, role, user_id FROM accounts WHERE id = ?", (account_id,))
     account = cursor.fetchone()
     if not account:
         conn.close()
@@ -151,6 +151,8 @@ def delete_account(account_id: int):
         if cursor.fetchone()["cnt"] <= 1:
             conn.close()
             return {"status": "last_admin"}
+    if account["user_id"]:
+        cursor.execute("UPDATE cards SET is_active = 0 WHERE user_id = ?", (account["user_id"],))
     cursor.execute("DELETE FROM accounts WHERE id = ?", (account_id,))
     conn.commit()
     conn.close()
@@ -361,11 +363,11 @@ def show_details(
 
     # base query
     query = """
-        SELECT e.event_time, e.event_type, c.card_uid, c.description, c.user_id,
+        SELECT e.event_time, e.event_type, c.card_uid, c.description, e.user_id,
                u.full_name, u.email
         FROM events e
         JOIN cards c ON e.card_id = c.id
-        LEFT JOIN users u ON u.id = c.user_id
+        LEFT JOIN users u ON u.id = e.user_id
         WHERE e.event_time >= ? AND e.event_time < ?
     """
     params = [since, until]
@@ -378,6 +380,7 @@ def show_details(
     if full_name:
         query += " AND u.full_name LIKE ?"
         params.append(f"%{full_name}%")
+
 
     query += " ORDER BY e.event_time DESC"
 
@@ -443,7 +446,7 @@ def get_user_info(user_id: int):
                COUNT(c.id) AS card_count
         FROM users u
         LEFT JOIN cards c ON c.user_id = u.id
-        WHERE u.id = ?
+        WHERE u.id = ? AND u.deleted_at IS NULL
         GROUP BY u.id
         """,
         (user_id,),
@@ -503,7 +506,8 @@ def get_present_users():
                 WHERE e.user_id = u.id AND e.event_type != 'rejected'
                 ORDER BY e.event_time DESC LIMIT 1) as entered_at
         FROM users u
-        WHERE (SELECT e.event_type FROM events e
+        WHERE u.deleted_at IS NULL
+          AND (SELECT e.event_type FROM events e
                WHERE e.user_id = u.id AND e.event_type != 'rejected'
                ORDER BY e.event_time DESC LIMIT 1) = 'in'
         ORDER BY entered_at ASC
@@ -604,6 +608,7 @@ def get_users():
                COUNT(c.id) AS card_count
         FROM users u
         LEFT JOIN cards c ON c.user_id = u.id
+        WHERE u.deleted_at IS NULL
         GROUP BY u.id
         ORDER BY u.full_name COLLATE NOCASE
         """
@@ -677,7 +682,8 @@ def delete_user(user_id: int):
         conn.close()
         return {"status": "not_found"}
     cursor.execute("UPDATE cards SET user_id = NULL, is_active = 0 WHERE user_id = ?", (user_id,))
-    cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    cursor.execute("DELETE FROM accounts WHERE user_id = ?", (user_id,))
+    cursor.execute("UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?", (user_id,))
     conn.commit()
     conn.close()
     return {"status": "removed", "full_name": user["full_name"]}
