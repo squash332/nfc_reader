@@ -1,5 +1,6 @@
 import { showMessage } from "./utils.js";
 import { initAuth } from "./auth_guard.js";
+import { attachAutocomplete } from "./autocomplete.js";
 const apiUrl = 'http://127.0.0.1:8000/tag';
 
 let allTags = [];
@@ -88,60 +89,6 @@ function updateCardCount(tags) {
 }
 
 // ── EMAIL AUTOCOMPLETE ────────────────────────────────────────────────────────
-
-function attachEmailAutocomplete(input) {
-    let dropdown = null;
-
-    function closeDropdown() {
-        if (dropdown) { dropdown.remove(); dropdown = null; }
-    }
-
-    function openDropdown(matches) {
-        closeDropdown();
-        if (!matches.length) return;
-
-        dropdown = document.createElement('div');
-        dropdown.className = 'autocomplete-dropdown';
-
-        const rect = input.getBoundingClientRect();
-        dropdown.style.top   = `${rect.bottom}px`;
-        dropdown.style.left  = `${rect.left}px`;
-        dropdown.style.width = `${rect.width}px`;
-
-        matches.forEach(user => {
-            const item = document.createElement('div');
-            item.className = 'autocomplete-item';
-            const meta = [user.full_name, user.position].filter(Boolean).join(' · ');
-            item.innerHTML = `
-                <div class="autocomplete-email">${user.email}</div>
-                ${meta ? `<div class="autocomplete-meta">${meta}</div>` : ''}
-            `;
-            item.addEventListener('mousedown', e => {
-                e.preventDefault();
-                input.value = user.email;
-                closeDropdown();
-            });
-            dropdown.appendChild(item);
-        });
-
-        document.body.appendChild(dropdown);
-    }
-
-    input.addEventListener('input', () => {
-        const q = input.value.toLowerCase();
-        if (!q) { closeDropdown(); return; }
-        const matches = allUsers
-            .filter(u => u.email && u.email.toLowerCase().includes(q))
-            .slice(0, 6);
-        openDropdown(matches);
-    });
-
-    input.addEventListener('focus', () => {
-        if (input.value) input.dispatchEvent(new Event('input'));
-    });
-
-    input.addEventListener('blur', closeDropdown);
-}
 
 // ── SEARCH FILTER ─────────────────────────────────────────────────────────────
 
@@ -364,7 +311,7 @@ window.onload = async () => {
 
     fetch('http://127.0.0.1:8000/user').then(r => r.json()).then(d => { allUsers = d.users || []; });
 
-    attachEmailAutocomplete(document.getElementById('card-user'));
+    attachAutocomplete(document.getElementById('card-user'), () => allUsers);
 
     document.getElementById('open-register').addEventListener('click', openModal);
     document.getElementById('modal-close').addEventListener('click', closeModal);

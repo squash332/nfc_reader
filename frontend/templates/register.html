@@ -52,19 +52,19 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="role">ROLE</label>
-                    <select id="role" class="edit-select form-input">
-                        <option value="" disabled selected hidden>- Choose role</option>
-                        <option value="user">USER</option>
-                        <option value="admin">ADMIN</option>
-                    </select>
+                    <label class="form-label">ROLE</label>
+                    <div class="form-input custom-select" id="role-btn" tabindex="0">
+                        <span class="custom-select-value">—</span>
+                        <span class="custom-select-arrow">▾</span>
+                    </div>
+                    <input type="hidden" id="role">
                 </div>
 
                 <div class="form-group" id="user-link-group">
-                    <label class="form-label" for="user-select">PROFILE</label>
-                    <select id="user-select" class="edit-select form-input">
-                        <option value="" disabled selected hidden>- Choose user</option>
-                    </select>
+                    <label class="form-label" for="user-search">PROFILE</label>
+                    <input type="text" id="user-search" class="form-input" placeholder="Search by name or email" autocomplete="off">
+                    <input type="hidden" id="user-id">
+                    <input type="hidden" id="user-email">
                 </div>
 
                 <div class="form-group" id="admin-email-group" style="display:none">

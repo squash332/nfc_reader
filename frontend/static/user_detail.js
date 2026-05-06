@@ -140,7 +140,9 @@ function groupByDate(events) {
     events.forEach(e => {
         const date = e.event_time.slice(0, 10);
         const time = e.event_time.slice(11, 16);
-        if (!map[date]) map[date] = {};
+        if (!map[date]) map[date] = { in: null, out: null, rejected: false, allEvents: [] };
+
+        map[date].allEvents.push({ type: e.event_type, time });
 
         if (e.event_type === 'in' && !map[date].in)   map[date].in  = time;
         if (e.event_type === 'out')                    map[date].out = time;
@@ -180,6 +182,62 @@ function buildDayCell(dayNum, d, isToday, isOtherMonth = false) {
         ${duration ? `<div class="cal-duration">${duration}</div>` : ''}
         ${d?.in && !d?.out ? `<div class="cal-still-in">INSIDE</div>` : ''}
         ${d?.rejected ? `<div class="cal-rejected">✕ REJECTED</div>` : ''}
+    `;
+    return cell;
+}
+
+
+function buildWeekDayCell(dateObj, d, isToday) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-day';
+    if (isToday)         cell.classList.add('is-today');
+    if (d?.in && d?.out) cell.classList.add('has-full');
+    else if (d?.in)      cell.classList.add('has-in-only');
+
+    let sessionsHTML = '';
+    let totalMins = 0;
+
+    if (d?.allEvents?.length) {
+        const evs = d.allEvents;
+        let i = 0;
+        while (i < evs.length) {
+            if (evs[i].type === 'in') {
+                const inTime = evs[i].time;
+                let outTime = null;
+                for (let j = i + 1; j < evs.length; j++) {
+                    if (evs[j].type === 'out') { outTime = evs[j].time; i = j + 1; break; }
+                }
+                if (outTime === null) i++;
+                const dur = (inTime && outTime) ? calcDuration(inTime, outTime) : '';
+                if (dur) {
+                    const [ih, im] = inTime.split(':').map(Number);
+                    const [oh, om] = outTime.split(':').map(Number);
+                    totalMins += Math.max(0, (oh * 60 + om) - (ih * 60 + im));
+                }
+                sessionsHTML += `
+                    <div class="cal-week-session${outTime ? '' : ' session-open'}">
+                        <span class="cal-time cal-time-in">▲ ${inTime}</span>
+                        ${outTime
+                            ? `<span class="cal-time cal-time-out">▼ ${outTime}</span>${dur ? `<span class="cal-week-dur">${dur}</span>` : ''}`
+                            : `<span class="cal-still-in">INSIDE</span>`
+                        }
+                    </div>`;
+            } else if (evs[i].type === 'rejected') {
+                sessionsHTML += `<div class="cal-rejected">✕ REJECTED</div>`;
+                i++;
+            } else {
+                i++;
+            }
+        }
+    }
+
+    const h = Math.floor(totalMins / 60), m = totalMins % 60;
+    const totalStr = totalMins > 0 ? (h ? `${h}h ${m}m` : `${m}m`) : '';
+
+    cell.innerHTML = `
+        <span class="cal-day-num">${dateObj.getDate()}</span>
+        ${sessionsHTML || `<span class="cal-week-empty">—</span>`}
+        ${totalStr ? `<div class="cal-duration cal-week-total">${totalStr} TOTAL</div>` : ''}
     `;
     return cell;
 }
@@ -231,7 +289,7 @@ function buildWeekCalendar(monday, byDate) {
         d.setDate(monday.getDate() + i);
         const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         const isToday = d.getTime() === today.getTime();
-        grid.appendChild(buildDayCell(d.getDate(), byDate[dateStr], isToday));
+        grid.appendChild(buildWeekDayCell(d, byDate[dateStr], isToday));
     }
 }
 

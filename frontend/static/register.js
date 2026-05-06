@@ -1,5 +1,6 @@
 import { initAuth } from './auth_guard.js';
 import { showMessage } from './utils.js';
+import { attachAutocomplete, attachCustomSelect } from './autocomplete.js';
 
 let selfEmail = '';
 
@@ -171,9 +172,9 @@ async function handleCreate() {
     let email, userId;
 
     if (role === 'user') {
-        const sel = document.getElementById('user-select');
-        userId = sel.value ? parseInt(sel.value) : null;
-        email  = sel.options[sel.selectedIndex]?.dataset.email || '';
+        const idVal = document.getElementById('user-id').value;
+        userId = idVal ? parseInt(idVal) : null;
+        email  = document.getElementById('user-email').value;
         if (!userId) { showMessage('Select a profile.', true); return; }
         if (!email)  { showMessage('Selected profile has no email.', true); return; }
     } else {
@@ -189,9 +190,11 @@ async function handleCreate() {
 
     if (data.status === 'ok') {
         showMessage('Account created.');
-        document.getElementById('password').value = '';
-        document.getElementById('user-select').value = '';
-        document.getElementById('email').value = '';
+        document.getElementById('password').value    = '';
+        document.getElementById('user-search').value = '';
+        document.getElementById('user-id').value     = '';
+        document.getElementById('user-email').value  = '';
+        document.getElementById('email').value       = '';
         loadAccounts();
     } else if (data.status === 'duplicate') {
         showMessage('An account with that email already exists.', true);
@@ -212,24 +215,41 @@ window.onload = async () => {
     selfEmail = authUser?.email || '';
 
     const userData = await fetchUsers();
-    const sel = document.getElementById('user-select');
-    (userData.users || []).forEach(u => {
-        const opt = document.createElement('option');
-        opt.value = u.id;
-        opt.dataset.email = u.email || '';
-        opt.textContent = u.full_name + (u.email ? `  ·  ${u.email}` : '');
-        sel.appendChild(opt);
+    const users = userData.users || [];
+
+    const userSearchInput = document.getElementById('user-search');
+    const userIdInput     = document.getElementById('user-id');
+    const userEmailInput  = document.getElementById('user-email');
+    const emailInput      = document.getElementById('email');
+
+    attachAutocomplete(userSearchInput, () => users, {
+        display:  u => ({ top: u.full_name, bottom: u.email + (u.position ? ` · ${u.position}` : '') }),
+        onSelect: u => {
+            userSearchInput.value = u.full_name;
+            userIdInput.value     = u.id;
+            userEmailInput.value  = u.email || '';
+        },
     });
 
-    const roleSelect      = document.getElementById('role');
+    attachAutocomplete(emailInput, () => users);
+
+    const roleHidden      = document.getElementById('role');
     const userLinkGroup   = document.getElementById('user-link-group');
     const adminEmailGroup = document.getElementById('admin-email-group');
 
-    roleSelect.addEventListener('change', () => {
-        const isUser = roleSelect.value === 'user';
-        userLinkGroup.style.display   = isUser ? 'flex' : 'none';
-        adminEmailGroup.style.display = isUser ? 'none'  : 'flex';
-    });
+    attachCustomSelect(
+        document.getElementById('role-btn'),
+        roleHidden,
+        [
+            { value: 'user',  label: 'USER'},
+            { value: 'admin', label: 'ADMIN'},
+        ],
+        value => {
+            const isUser = value === 'user';
+            userLinkGroup.style.display   = isUser ? 'flex' : 'none';
+            adminEmailGroup.style.display = isUser ? 'none' : 'flex';
+        }
+    );
 
     document.getElementById('add-btn').addEventListener('click', handleCreate);
 

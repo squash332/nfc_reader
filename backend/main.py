@@ -12,7 +12,7 @@ from routes import router, static_directory
 
 app = FastAPI()
 
-EXEMPT       = {"/login", "/auth/login", "/auth/logout"}
+EXEMPT       = {"/login", "/auth/login", "/auth/logout", "/event"}
 SETUP_PATHS  = {"/register", "/auth/register"}
 
 
