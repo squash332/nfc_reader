@@ -106,6 +106,12 @@ def auth_register(data: RegisterData, request: Request):
         conn.close()
         return {"status": "duplicate"}
 
+    if data.user_id:
+        cursor.execute("SELECT id FROM accounts WHERE user_id = ?", (data.user_id,))
+        if cursor.fetchone():
+            conn.close()
+            return {"status": "user_taken"}
+
     role = "admin" if count == 0 else data.role
     cursor.execute(
         "INSERT INTO accounts (user_id, email, password_hash, role) VALUES (?, ?, ?, ?)",
