@@ -1,0 +1,38 @@
+.accounts-columns {
+    grid-template-columns: 1fr 110px 180px 220px;
+}
+
+.account-item {
+    grid-template-columns: 1fr 110px 180px 220px;
+}
+
+.acct-role {
+    display: inline-flex;
+    align-items: center;
+    justify-self: start;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 3px 10px;
+    border-radius: 3px;
+}
+
+.acct-role-admin {
+    background: rgba(255, 200, 60, 0.12);
+    color: #ffc83c;
+    border: 1px solid rgba(255, 200, 60, 0.25);
+}
+
+.acct-role-user {
+    background: rgba(100, 180, 255, 0.10);
+    color: #64b4ff;
+    border: 1px solid rgba(100, 180, 255, 0.22);
+}
+
+.edit-select.form-input {
+    appearance: none;
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    cursor: pointer;
+}

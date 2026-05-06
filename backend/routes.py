@@ -10,7 +10,7 @@ from fastapi import Response, Request
 
 from auth import hash_pw, check_pw, make_token, read_token
 from database import get_connection
-from models import ScanEvent, Tag, UpdateTag, CreateUser, UpdateUser, LoginData, RegisterData
+from models import ScanEvent, Tag, UpdateTag, CreateUser, UpdateUser, LoginData, RegisterData, UpdateAccount
 
 router = APIRouter()
 
@@ -117,6 +117,71 @@ def auth_register(data: RegisterData, request: Request):
         "INSERT INTO accounts (user_id, email, password_hash, role) VALUES (?, ?, ?, ?)",
         (data.user_id, data.email.strip(), hash_pw(data.password), role),
     )
+    conn.commit()
+    conn.close()
+    return {"status": "ok"}
+
+
+@router.get("/auth/accounts")
+def list_accounts():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT a.id, a.email, a.role, a.user_id, u.full_name
+        FROM accounts a
+        LEFT JOIN users u ON u.id = a.user_id
+        ORDER BY a.role DESC, a.email COLLATE NOCASE
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+    return {"accounts": [dict(r) for r in rows]}
+
+
+@router.delete("/auth/accounts/{account_id}")
+def delete_account(account_id: int):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT email, role FROM accounts WHERE id = ?", (account_id,))
+    account = cursor.fetchone()
+    if not account:
+        conn.close()
+        return {"status": "not_found"}
+    if account["role"] == "admin":
+        cursor.execute("SELECT COUNT(*) AS cnt FROM accounts WHERE role = 'admin'")
+        if cursor.fetchone()["cnt"] <= 1:
+            conn.close()
+            return {"status": "last_admin"}
+    cursor.execute("DELETE FROM accounts WHERE id = ?", (account_id,))
+    conn.commit()
+    conn.close()
+    return {"status": "removed", "email": account["email"]}
+
+
+@router.patch("/auth/accounts/{account_id}")
+def update_account(account_id: int, data: UpdateAccount):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT role, user_id FROM accounts WHERE id = ?", (account_id,))
+    account = cursor.fetchone()
+    if not account:
+        conn.close()
+        return {"status": "not_found"}
+
+    if data.password:
+        cursor.execute("UPDATE accounts SET password_hash = ? WHERE id = ?",
+                       (hash_pw(data.password), account_id))
+
+    if data.role:
+        if data.role == "user" and not account["user_id"]:
+            conn.close()
+            return {"status": "no_profile"}
+        if data.role == "user" and account["role"] == "admin":
+            cursor.execute("SELECT COUNT(*) AS cnt FROM accounts WHERE role = 'admin'")
+            if cursor.fetchone()["cnt"] <= 1:
+                conn.close()
+                return {"status": "last_admin"}
+        cursor.execute("UPDATE accounts SET role = ? WHERE id = ?", (data.role, account_id))
+
     conn.commit()
     conn.close()
     return {"status": "ok"}

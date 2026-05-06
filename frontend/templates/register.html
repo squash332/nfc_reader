@@ -4,60 +4,116 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <title>SENTINEL — Create Account</title>
+    <title>SENTINEL — Accounts</title>
     <link rel="stylesheet" href="/static/fonts.css">
     <link rel="stylesheet" href="/static/styles.css">
-    <link rel="stylesheet" href="/static/auth.css">
+    <link rel="stylesheet" href="/static/accounts.css">
 </head>
 <body>
 
     <div class="scanlines" aria-hidden="true"></div>
 
-    <div class="auth-page">
-        <div class="auth-card">
+    <div class="app">
 
-            <div class="auth-brand">
-                <span class="auth-logo-icon">◈</span>
-                <span class="auth-logo-title">SENTINEL</span>
+        <!-- ── TOP NAV ── -->
+        <header class="topbar">
+            <div class="topbar-brand">
+                <span class="logo-icon">◈</span>
+                <div>
+                    <div class="logo-title">SENTINEL</div>
+                    <div class="logo-sub">Access Control System</div>
+                </div>
             </div>
-
-            <div class="auth-heading">CREATE ACCOUNT</div>
-
-            <div class="form-group">
-                <label class="form-label" for="role">ROLE</label>
-                <select id="role" class="edit-select" style="width:100%;padding:9px 12px;font-size:12px">
-                    <option value="user">USER</option>
-                    <option value="admin">ADMIN</option>
-                </select>
+            <nav class="topbar-nav">
+                <a href="/" class="nav-item nav-admin"><span class="nav-icon">⊞</span> Tag Manager</a>
+                <a href="/details" class="nav-item nav-admin"><span class="nav-icon">◧</span> Access Log</a>
+                <a href="/users" class="nav-item nav-admin"><span class="nav-icon">◉</span> Users</a>
+                <span class="nav-item active nav-admin"><span class="nav-icon">⊕</span> Accounts</span>
+            </nav>
+            <div class="topbar-user">
+                <span class="topbar-email" id="topbar-email"></span>
+                <button class="topbar-logout-btn" id="topbar-logout">LOGOUT</button>
             </div>
-
-            <div class="form-group" id="user-link-group">
-                <label class="form-label" for="user-select">PROFILE</label>
-                <select id="user-select" class="edit-select" style="width:100%;padding:9px 12px;font-size:12px">
-                    <option value="">— select profile —</option>
-                </select>
+            <div class="topbar-status">
+                <span class="status-dot"></span>
+                <span class="status-text">LIVE</span>
             </div>
+        </header>
 
-            <div class="form-group" id="admin-email-group" style="display:none">
-                <label class="form-label" for="email">EMAIL</label>
-                <input type="email" id="email" class="form-input" placeholder="admin@email.com" autocomplete="off">
-            </div>
+        <!-- ── MAIN ── -->
+        <div class="main">
 
-            <div class="form-group">
-                <label class="form-label" for="password">PASSWORD</label>
-                <input type="password" id="password" class="form-input" placeholder="••••••••">
-            </div>
+            <!-- ── LEFT: CREATE ACCOUNT ── -->
+            <aside class="register-panel">
 
-            <button class="add-btn" id="register-btn">
-                <span class="add-btn-icon">＋</span>
-                CREATE ACCOUNT
-            </button>
+                <div class="panel-heading">
+                    <div class="panel-title">CREATE ACCOUNT</div>
+                    <div class="panel-sub">Add login credentials</div>
+                </div>
 
-            <div id="message" class="message"></div>
+                <div class="form-group">
+                    <label class="form-label" for="role">ROLE</label>
+                    <select id="role" class="edit-select form-input">
+                        <option value="" disabled selected hidden>- Choose role</option>
+                        <option value="user">USER</option>
+                        <option value="admin">ADMIN</option>
+                    </select>
+                </div>
 
-            <div class="auth-link"><a href="/">← Back to dashboard</a></div>
+                <div class="form-group" id="user-link-group">
+                    <label class="form-label" for="user-select">PROFILE</label>
+                    <select id="user-select" class="edit-select form-input">
+                        <option value="" disabled selected hidden>- Choose user</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="admin-email-group" style="display:none">
+                    <label class="form-label" for="email">EMAIL</label>
+                    <input type="email" id="email" class="form-input" placeholder="admin@email.com" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">PASSWORD</label>
+                    <input type="password" id="password" class="form-input" placeholder="••••••••">
+                </div>
+
+                <button id="add-btn" class="add-btn">
+                    <span class="add-btn-icon">＋</span>
+                    CREATE ACCOUNT
+                </button>
+
+                <div id="message" class="message"></div>
+
+            </aside>
+
+            <!-- ── RIGHT: ACCOUNT LIST ── -->
+            <main class="registry-panel">
+
+                <div class="registry-header">
+                    <div>
+                        <div class="panel-title">ACCOUNTS</div>
+                        <div class="panel-sub" id="account-count">Loading…</div>
+                    </div>
+                </div>
+
+                <div class="registry-columns accounts-columns">
+                    <span>EMAIL</span>
+                    <span>ROLE</span>
+                    <span>PROFILE</span>
+                    <span>ACTIONS</span>
+                </div>
+
+                <ul id="account-list" class="card-list"></ul>
+
+                <div id="empty-state" class="empty-state" style="display:none">
+                    <span class="empty-icon">◌</span>
+                    <span>No accounts yet.</span>
+                </div>
+
+            </main>
 
         </div>
+
     </div>
 
     <script type="module" src="/static/register.js"></script>

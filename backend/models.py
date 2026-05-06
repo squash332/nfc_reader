@@ -37,3 +37,7 @@ class RegisterData(BaseModel):
     password: str
     role: str = 'user'
     user_id: Optional[int] = None
+
+class UpdateAccount(BaseModel):
+    password: Optional[str] = None
+    role: Optional[str] = None
