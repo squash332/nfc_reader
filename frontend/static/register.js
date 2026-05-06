@@ -3,6 +3,7 @@ import { showMessage } from './utils.js';
 import { attachAutocomplete, attachCustomSelect } from './autocomplete.js';
 
 let selfEmail = '';
+const userIdFilter = new URLSearchParams(window.location.search).get('user_id');
 
 // ── API ───────────────────────────────────────────────────────────────────────
 
@@ -77,7 +78,11 @@ function renderAccounts(accounts) {
     const countEl    = document.getElementById('account-count');
     list.innerHTML   = '';
 
-    const visible = accounts.filter(a => a.email !== selfEmail);
+    const visible = accounts.filter(a => {
+        if (a.email === selfEmail) return false;
+        if (userIdFilter) return String(a.user_id) === userIdFilter;
+        return true;
+    });
     countEl.textContent = `${visible.length} account${visible.length !== 1 ? 's' : ''}`;
 
     if (!visible || visible.length === 0) {
@@ -216,6 +221,13 @@ window.onload = async () => {
 
     const userData = await fetchUsers();
     const users = userData.users || [];
+
+    if (userIdFilter) {
+        const match = users.find(u => String(u.id) === userIdFilter);
+        const label = match ? match.full_name : `USER ${userIdFilter}`;
+        document.getElementById('filter-label').textContent = label;
+        document.getElementById('filter-badge').style.display = 'flex';
+    }
 
     const userSearchInput = document.getElementById('user-search');
     const userIdInput     = document.getElementById('user-id');

@@ -76,7 +76,11 @@
     color: var(--text-primary);
     line-height: 1.2;
     margin-bottom: 6px;
+    text-decoration: none;
+    display: block;
+    transition: color 0.15s;
 }
+a.ud-name:hover { color: var(--amber); }
 
 .ud-field {
     font-size: 10px;
@@ -384,4 +388,38 @@
 /* ── WEEK GRID ── */
 .cal-grid-week .cal-day {
     min-height: 200px;
+}
+
+.cal-week-session {
+    padding: 4px 6px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.cal-week-session.session-open {
+    background: var(--amber-glow);
+    border-color: var(--amber-dim);
+}
+
+.cal-week-dur {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-primary);
+    border-top: 1px solid var(--border);
+    padding-top: 2px;
+    margin-top: 1px;
+}
+
+.cal-week-total {
+    margin-top: auto;
+}
+
+.cal-week-empty {
+    font-size: 11px;
+    color: var(--text-dim);
 }

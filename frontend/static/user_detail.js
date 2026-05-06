@@ -78,7 +78,11 @@ async function loadUserInfo() {
     document.getElementById('ud-avatar').textContent = initials;
     document.getElementById('ud-name').textContent = u.full_name;
     if (u.position) document.getElementById('ud-position').textContent = u.position;
-    if (u.email)    document.getElementById('ud-email').textContent = u.email;
+    if (u.email) {
+        const emailEl = document.getElementById('ud-email');
+        emailEl.textContent = u.email;
+        emailEl.href = `/register?user_id=${userId}`;
+    }
     if (u.created_at) {
         const since = new Date(u.created_at.replace(' ', 'T'))
             .toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });

@@ -152,22 +152,23 @@ html, body {
 .topbar-user {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     margin-left: auto;
-    margin-right: 16px;
+    padding-left: 24px;
+    border-left: 1px solid var(--border);
 }
 
 .topbar-email {
-    font-size: 10px;
-    color: var(--text-dim);
-    letter-spacing: 1px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
 }
 
 .topbar-logout-btn {
     background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    padding: 4px 10px;
+    border: 1px solid var(--border-lit);
+    color: var(--text-secondary);
+    padding: 5px 14px;
     border-radius: var(--radius);
     font-family: var(--font-mono);
     font-size: 9px;
@@ -181,34 +182,6 @@ html, body {
     border-color: var(--red-dim);
     color: var(--red);
     background: var(--red-glow);
-}
-
-.topbar-status {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-left: auto;
-}
-
-.status-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--green);
-    box-shadow: 0 0 8px var(--green);
-    animation: blink 2s step-end infinite;
-}
-
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.2; }
-}
-
-.status-text {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--green);
-    letter-spacing: 2px;
 }
 
 /* ── MAIN LAYOUT ── */
@@ -655,6 +628,29 @@ select.form-input {
     justify-content: space-between;
     flex-shrink: 0;
 }
+
+.filter-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--amber);
+    background: var(--amber-glow);
+    border: 1px solid var(--amber-dim);
+    border-radius: var(--radius);
+    padding: 4px 10px;
+}
+
+.filter-clear {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 9px;
+    letter-spacing: 1px;
+    transition: color 0.15s;
+}
+.filter-clear:hover { color: var(--text-primary); }
 
 .registry-legend {
     display: flex;
