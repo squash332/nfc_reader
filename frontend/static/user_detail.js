@@ -144,13 +144,13 @@ function groupByDate(events) {
     events.forEach(e => {
         const date = e.event_time.slice(0, 10);
         const time = e.event_time.slice(11, 16);
-        if (!map[date]) map[date] = { in: null, out: null, rejected: false, allEvents: [] };
+        if (!map[date]) map[date] = { in: null, out: null, rejected: null, allEvents: [] };
 
         map[date].allEvents.push({ type: e.event_type, time });
 
         if (e.event_type === 'in' && !map[date].in)   map[date].in  = time;
         if (e.event_type === 'out')                    map[date].out = time;
-        if (e.event_type === 'rejected')               map[date].rejected = true;
+        if (e.event_type === 'rejected')               map[date].rejected = time;
     });
     return map;
 }
@@ -185,7 +185,7 @@ function buildDayCell(dayNum, d, isToday, isOtherMonth = false) {
         ${d?.out ? `<div class="cal-time cal-time-out">▼ ${d.out}</div>` : ''}
         ${duration ? `<div class="cal-duration">${duration}</div>` : ''}
         ${d?.in && !d?.out ? `<div class="cal-still-in">INSIDE</div>` : ''}
-        ${d?.rejected ? `<div class="cal-rejected">✕ REJECTED</div>` : ''}
+        ${d?.rejected ? `<div class="cal-rejected">✕ REJECTED ${d.rejected}</div>` : ''}
     `;
     return cell;
 }
@@ -227,7 +227,7 @@ function buildWeekDayCell(dateObj, d, isToday) {
                         }
                     </div>`;
             } else if (evs[i].type === 'rejected') {
-                sessionsHTML += `<div class="cal-rejected">✕ REJECTED</div>`;
+                sessionsHTML += `<div class="cal-rejected">✕ REJECTED ${d.rejected}</div>`;
                 i++;
             } else {
                 i++;

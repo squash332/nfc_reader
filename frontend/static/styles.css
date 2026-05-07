@@ -160,14 +160,15 @@ html, body {
 
 .topbar-email {
     font-size: 11px;
-    color: var(--text-secondary);
+    color: var(--amber);
     letter-spacing: 0.5px;
+    font-weight: 500;
 }
 
 .topbar-logout-btn {
     background: transparent;
-    border: 1px solid var(--border-lit);
-    color: var(--text-secondary);
+    border: 2px solid var(--border-lit);
+    color: var(--text-primary);
     padding: 5px 14px;
     border-radius: var(--radius);
     font-family: var(--font-mono);
@@ -405,13 +406,13 @@ html, body {
     font-size: 9px;
     font-weight: 700;
     letter-spacing: 3px;
-    color: var(--text-dim);
+    color: var(--text-secondary);
 }
 
 .form-label-optional {
     font-weight: 400;
     letter-spacing: 1px;
-    color: var(--text-dim);
+    color: var(--text-secondary);
     font-size: 8px;
     text-transform: lowercase;
 }
@@ -725,7 +726,7 @@ select.form-input {
     font-size: 9px;
     font-weight: 700;
     letter-spacing: 2px;
-    color: var(--text-dim);
+    color: var(--text-secondary);
 }
 
 /* card list */

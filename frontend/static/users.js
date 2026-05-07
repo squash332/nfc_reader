@@ -64,13 +64,13 @@ function createUserElement(user, index) {
     li.style.animationDelay = `${Math.min(index * 30, 300)}ms`;
 
     const email = user.email ?? '—';
-    const emailClass = user.email ? 'card-desc user-email' : 'card-desc user-email unassigned';
+    const emailClass = user.email && user.id ? 'card-desc user-email' : 'card-desc user-email unassigned';
     const position = user.position ?? '—';
     const posClass = user.position ? 'card-desc' : 'card-desc unassigned';
 
     li.innerHTML = `
         <div class="card-uid user-name"><a href="/user/${user.id}" class="user-link">${user.full_name}</a></div>
-        <div class="${emailClass}" title="${user.email ?? ''}">${email}</div>
+        <div class="${emailClass}" title="${user.email ?? ''}"><a href="/register?user_id=${user.id}" class="user-link">${email}</a></div>
         <div class="${posClass}" title="${user.position ?? ''}">${position}</div>
         <div class="user-card-count">${user.card_count}</div>
         <div class="card-actions">

@@ -5,7 +5,7 @@ const apiUrl = 'http://127.0.0.1:8000/details/data';
 const tagApiUrl = 'http://127.0.0.1:8000/tag';
 
 let cachedEvents = [];
-let activeRange = 'month';
+let activeRange = 'day';
 let activeEventType = '';
 let activeUserFilter = '';
 
@@ -67,8 +67,7 @@ function renderDetails(events) {
                 <span class="date-part">${date}</span>${time}
             </div>
             <div class="log-user">${e.user_id && e.full_name ? `<a href="/user/${e.user_id}" class="user-link">${e.full_name}</a>` : (e.full_name ?? '—')}</div>
-            <div class="log-email">${e.email ?? '—'}</div>
-            <div class="log-card" title="${e.card_uid ?? ''}">${e.description ?? e.card_uid ?? '—'}</div>
+            <div class="log-email">${e.email && e.user_id ? `<a href="/register?user_id=${e.user_id}" class="user-link">${e.email}</a>` : (e.email ?? '—')}</div>
             <div>
                 <span class="log-badge ${badgeClass}">
                     <span class="badge-dot"></span>
@@ -206,8 +205,8 @@ const fpConfig = {
 flatpickr('.date-control-from', fpConfig);
 flatpickr('.date-control-to', fpConfig);
 
-loadDetails('month');
-setRangeLabel('Last 30 days');
+loadDetails('day');
+setRangeLabel('Last 24 hours');
 
 document.getElementById('day-btn').addEventListener('click', () => {
     activeRange = 'day';
@@ -258,13 +257,12 @@ document.getElementById('clear-date-btn').addEventListener('click', () => {
     document.querySelector('.date-control-from')._flatpickr.clear();
     document.querySelector('.date-control-to')._flatpickr.clear();
 
-    activeRange = 'month';
-    activeEventType = '';
-    setActiveRange('month-btn', 'Last 30 days');
+
+    setActiveRange('day-btn', 'Last 24 hours');
     document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
     document.querySelector('.filter-tab[data-type=""]').classList.add('active');
 
-    loadDetails('month');
+    loadDetails('day');
 });
 
 document.querySelectorAll('.filter-tab').forEach(tab => {
