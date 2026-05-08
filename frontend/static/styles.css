@@ -714,7 +714,7 @@ select.form-input {
 /* columns header */
 .registry-columns {
     display: grid;
-    grid-template-columns: 160px 200px 1fr 110px 110px;
+    grid-template-columns: 160px 180px 220px 1fr 90px 140px;
     gap: 0;
     padding: 7px 28px;
     background: var(--bg-panel);
@@ -742,7 +742,7 @@ select.form-input {
 /* card list item */
 .card-item {
     display: grid;
-    grid-template-columns: 160px 200px 1fr 90px 140px;
+    grid-template-columns: 160px 180px 220px 1fr 90px 140px;
     align-items: center;
     padding: 11px 28px;
     border-bottom: 1px solid var(--border);

@@ -126,6 +126,7 @@ function createCardElement(tag, index) {
         <div class="card-uid" title="${tag.card_uid}">${tag.card_uid}</div>
         <div class="${userClass}">${userLabel}</div>
         <div class="card-email" title="${tag.email ?? ''}">${emailLabel}</div>
+        <div class="card-desc" title="${tag.description ?? ''}">${tag.description ?? '—'}</div>
         <div>
             <span class="card-status-badge ${isActive ? 'badge-active' : 'badge-inactive'}">
                 <span class="badge-dot"></span>
