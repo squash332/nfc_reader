@@ -1,10 +1,20 @@
 import os
+from pathlib import Path
 
 import jwt as pyjwt
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import RedirectResponse, JSONResponse
+
+_env = Path(__file__).parent / ".env"
+if _env.exists():
+    for _line in _env.read_text().splitlines():
+        if "=" in _line and not _line.startswith("#"):
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip())
+
+API_KEY = os.getenv("API_KEY", "")
 
 from auth import read_token
 from database import init_db, get_connection
@@ -21,6 +31,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         path = request.url.path
 
         if path.startswith("/static") or path in EXEMPT:
+            return await call_next(request)
+
+        if API_KEY and request.headers.get("X-API-Key") == API_KEY:
             return await call_next(request)
 
         # /register is public only before any account exists (first-run setup)

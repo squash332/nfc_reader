@@ -17,6 +17,7 @@ class UpdateTag(BaseModel):
 
 class ScanEvent(BaseModel):
     card_uid: str
+    card_desc: Optional[str] = None
 
 class CreateUser(BaseModel):
     full_name: str

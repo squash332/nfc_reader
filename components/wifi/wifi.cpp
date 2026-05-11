@@ -204,7 +204,7 @@ esp_err_t load_wifi_credentials(char *ssid, char *password) {
         nvs_get_str(my_handle, "ssid", ssid, &required_size);
     } else {
         ESP_LOGW(TAG, "SSID not found in NVS, using default.");
-        strcpy(ssid, "HONOR 90"); 
+        strcpy(ssid, CONFIG_WIFI_SSID);
     }
 
     err = nvs_get_str(my_handle, "password", NULL, &required_size);
@@ -212,7 +212,7 @@ esp_err_t load_wifi_credentials(char *ssid, char *password) {
         nvs_get_str(my_handle, "password", password, &required_size);
     } else {
         ESP_LOGW(TAG, "Password not found in NVS, using default.");
-        strcpy(password, "jpbo2636"); 
+        strcpy(password, CONFIG_WIFI_PASSWORD);
     }
 
     nvs_close(my_handle);
