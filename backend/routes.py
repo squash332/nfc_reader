@@ -1,5 +1,7 @@
 import re
-from datetime import datetime, timedelta
+import secrets
+import string
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
@@ -8,8 +10,10 @@ from typing import Optional
 
 from fastapi import Response, Request
 
+from fastapi import HTTPException
 from auth import hash_pw, check_pw, make_token, read_token
 from database import get_connection
+from models import RedeemCode
 from models import ScanEvent, Tag, UpdateTag, CreateUser, UpdateUser, LoginData, RegisterData, UpdateAccount
 
 router = APIRouter()
@@ -203,15 +207,28 @@ async def details():
         return HTMLResponse(content=f.read())
 
 
+def _generate_uid():
+    return secrets.token_hex(4).upper()
+
+def _generate_code():
+    chars = [c for c in string.ascii_uppercase + string.digits if c not in 'O0I1L']
+    raw = ''.join(secrets.choice(chars) for _ in range(6))
+    return f"{raw[:3]}-{raw[3:]}"
+
 @router.post("/tag")
 def receive_tag(data: Tag):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM cards WHERE card_uid = ?", (data.card_uid,))
-    existing = cursor.fetchone()
+    phone_flow = not data.card_uid
+    card_uid   = data.card_uid or _generate_uid()
 
-    if existing:
+    if phone_flow and not data.email:
+        conn.close()
+        return {"status": "error", "message": "Email is required when auto-generating a card."}
+
+    cursor.execute("SELECT * FROM cards WHERE card_uid = ?", (card_uid,))
+    if cursor.fetchone():
         conn.close()
         return {"status": "duplicate"}
 
@@ -224,19 +241,58 @@ def receive_tag(data: Tag):
             return {"status": "user_not_found", "email": data.email}
         user_id = user_row["id"]
 
-    # cards default to inactive, changed later by admin
     cursor.execute(
-        """
-        INSERT INTO cards (card_uid, description, user_id, is_active)
-        VALUES (?, ?, ?, 0)
-    """,
-        (data.card_uid, data.description, user_id),
+        "INSERT INTO cards (card_uid, description, user_id, is_active) VALUES (?, ?, ?, 0)",
+        (card_uid, data.description, user_id),
     )
+    card_id = cursor.lastrowid
+
+    claim_code = None
+    if phone_flow:
+        claim_code = _generate_code()
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=48)
+        cursor.execute(
+            "INSERT INTO claim_codes (card_id, code, expires_at) VALUES (?, ?, ?)",
+            (card_id, claim_code, expires_at.strftime("%Y-%m-%d %H:%M:%S")),
+        )
 
     conn.commit()
     conn.close()
 
-    return {"status": "ok", "added_tag": data.card_uid}
+    return {"status": "ok", "added_tag": card_uid, "claim_code": claim_code}
+
+
+@router.post("/tag/redeem")
+def redeem_code(data: RedeemCode):
+    conn    = get_connection()
+    cursor  = conn.cursor()
+
+    cursor.execute("""
+        SELECT cc.id, cc.used, cc.expires_at, c.card_uid
+        FROM claim_codes cc
+        JOIN cards c ON c.id = cc.card_id
+        WHERE cc.code = ?
+    """, (data.code.upper(),))
+    row = cursor.fetchone()
+
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Code not found")
+
+    if row["used"]:
+        conn.close()
+        raise HTTPException(status_code=410, detail="Code already used")
+
+    expires_at = datetime.fromisoformat(row["expires_at"]).replace(tzinfo=timezone.utc)
+    if datetime.now(timezone.utc) > expires_at:
+        conn.close()
+        raise HTTPException(status_code=410, detail="Code expired")
+
+    cursor.execute("UPDATE claim_codes SET used = 1 WHERE id = ?", (row["id"],))
+    conn.commit()
+    conn.close()
+
+    return {"status": "ok", "card_uid": row["card_uid"]}
 
 
 @router.get("/tag")

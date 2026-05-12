@@ -4,10 +4,13 @@ from pydantic import BaseModel
 
 
 class Tag(BaseModel):
-    card_uid: str
-    description: Optional[str] = None # esp will only send uid, not description
+    card_uid: Optional[str] = None
+    description: Optional[str] = None
     is_active: bool = False
     email: Optional[str] = None
+
+class RedeemCode(BaseModel):
+    code: str
 
 
 class UpdateTag(BaseModel):

@@ -116,27 +116,37 @@
                 <button class="modal-close" id="modal-close">✕</button>
             </div>
 
-            <div class="form-group">
-                <label class="form-label" for="card-uid">CARD UID</label>
-                <input type="text" id="card-uid" class="form-input" placeholder="e.g. A3:F2:01:CC" autocomplete="off" spellcheck="false">
+            <div id="card-form">
+                <div class="form-group">
+                    <label class="form-label" for="card-uid">CARD UID <span class="form-label-optional">(leave blank for phone)</span></label>
+                    <input type="text" id="card-uid" class="form-input" placeholder="e.g. A3:F2:01:CC" autocomplete="off" spellcheck="false">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="card-description">DESCRIPTION</label>
+                    <input type="text" id="card-description" class="form-input" placeholder="e.g. Main entrance card" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="card-user">USER EMAIL <span class="form-label-optional" id="email-optional">(optional)</span></label>
+                    <input type="email" id="card-user" class="form-input" placeholder="e.g. john@example.com" autocomplete="off">
+                </div>
+
+                <button id="add-btn" class="add-btn">
+                    <span class="add-btn-icon">＋</span>
+                    REGISTER CARD
+                </button>
+
+                <div id="message" class="message"></div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label" for="card-description">DESCRIPTION</label>
-                <input type="text" id="card-description" class="form-input" placeholder="e.g. Main entrance card" autocomplete="off">
+            <div id="code-result" style="display:none">
+                <div class="code-result-label">CLAIM CODE — SEND THIS TO THE USER</div>
+                <div class="code-display" id="code-display"></div>
+                <div class="code-result-sub">Expires in 48 hours · Single use</div>
+                <button class="add-btn" id="code-copy-btn">COPY CODE</button>
+                <button class="edit-cancel" id="code-done-btn" style="margin-top:6px">DONE</button>
             </div>
-
-            <div class="form-group">
-                <label class="form-label" for="card-user">USER EMAIL <span class="form-label-optional">(optional)</span></label>
-                <input type="email" id="card-user" class="form-input" placeholder="e.g. john@example.com" autocomplete="off">
-            </div>
-
-            <button id="add-btn" class="add-btn">
-                <span class="add-btn-icon">＋</span>
-                REGISTER CARD
-            </button>
-
-            <div id="message" class="message"></div>
         </div>
     </div>
 

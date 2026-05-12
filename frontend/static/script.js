@@ -200,6 +200,8 @@ async function loadTags() {
 
 function openModal() {
     document.getElementById('register-modal').style.display = 'flex';
+    document.getElementById('card-form').style.display = 'block';
+    document.getElementById('code-result').style.display = 'none';
     document.getElementById('card-uid').focus();
 }
 
@@ -208,28 +210,45 @@ function closeModal() {
     document.getElementById('card-uid').value = '';
     document.getElementById('card-description').value = '';
     document.getElementById('card-user').value = '';
+    document.getElementById('code-result').style.display = 'none';
+    document.getElementById('card-form').style.display = 'block';
     const msg = document.getElementById('message');
     msg.className = 'message';
     msg.textContent = '';
+}
+
+function showCodeResult(code) {
+    document.getElementById('card-form').style.display = 'none';
+    const resultEl = document.getElementById('code-result');
+    resultEl.style.display = 'block';
+    document.getElementById('code-display').textContent = code;
+    document.getElementById('code-copy-btn').onclick = () => {
+        navigator.clipboard.writeText(code);
+        document.getElementById('code-copy-btn').textContent = 'COPIED ✓';
+    };
+    document.getElementById('code-done-btn').onclick = closeModal;
 }
 
 async function handleAdd() {
     const card_uid = document.getElementById('card-uid').value.trim();
     const desc     = document.getElementById('card-description').value.trim();
     const email    = document.getElementById('card-user').value.trim();
+    const phoneFlow = !card_uid;
 
-    if (!card_uid || !desc) {
-        showMessage('Both UID and description are required.', true);
-        return;
-    }
+    if (!desc) { showMessage('Description is required.', true); return; }
+    if (phoneFlow && !email) { showMessage('Email is required when auto-generating a card.', true); return; }
 
-    const res  = await createTag(card_uid, desc, email);
+    const res  = await createTag(card_uid || null, desc, email);
     const data = await res.json();
 
     if (data.status === 'ok') {
-        showMessage(`Card '${card_uid}' registered${email ? ` — assigned to ${email}` : ''}.`);
         loadTags();
-        setTimeout(closeModal, 1200);
+        if (data.claim_code) {
+            showCodeResult(data.claim_code);
+        } else {
+            showMessage(`Card '${data.added_tag}' registered${email ? ` — assigned to ${email}` : ''}.`);
+            setTimeout(closeModal, 1200);
+        }
     } else if (data.status === 'duplicate') {
         showMessage(`UID '${card_uid}' already exists.`, true);
     } else if (data.status === 'user_not_found') {

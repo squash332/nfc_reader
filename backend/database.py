@@ -109,6 +109,17 @@ def init_db():
             ALTER TABLE accounts_new RENAME TO accounts;
         """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS claim_codes (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            card_id    INTEGER NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+            code       TEXT UNIQUE NOT NULL,
+            used       INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expires_at DATETIME NOT NULL
+        )
+    """)
+
     cursor.executescript("""
         CREATE INDEX IF NOT EXISTS idx_events_card_id    ON events(card_id);
         CREATE INDEX IF NOT EXISTS idx_events_event_time ON events(event_time);
