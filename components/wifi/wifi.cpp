@@ -20,7 +20,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
     {
         if (conn_retry_num < MAX_FAILURES)
         {
-            ESP_LOGI(TAG, "Reconnecting to AP...");
+            ESP_LOGI(TAG, "Trying to reconnect..");
             esp_wifi_connect();
             conn_retry_num++;
         }

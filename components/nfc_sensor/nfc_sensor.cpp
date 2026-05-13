@@ -165,7 +165,6 @@ bool PN532::readCard()
     {
         return false;
     }
-
     ESP_LOGI(TAG, "UID length: %d", uid_length);
     ESP_LOG_BUFFER_HEX_LEVEL(TAG, uid, uid_length, ESP_LOG_INFO);
 
@@ -182,6 +181,61 @@ bool PN532::readCard()
     }
 
     // for now we only care about UID
+    return true;
+}
+
+bool PN532::exchangeDataWithPhone()
+{
+    if (pn532_in_list_passive_target(&io_handle) != ESP_OK) {
+        ESP_LOGE(TAG, "Nothing to scan");
+        return false;
+    }
+
+
+    // AID matches the one in the app
+    uint8_t selectAid[] = {
+        0x00, 0xA4, 0x04, 0x00,
+        0x07,
+        0xF0, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06
+    };
+    uint8_t response[32];
+    uint8_t responseLen = sizeof(response);
+
+    if (pn532_in_data_exchange(&io_handle,
+            selectAid, sizeof(selectAid),
+            response, &responseLen) != ESP_OK)
+    {
+        ESP_LOGE(TAG, "SELECT AID failed");
+        return false;
+    }
+
+    // GET UID — custom command, phone responds with stored UID + 90 00
+    uint8_t getUid[] = { 0x00, 0xB0, 0x00, 0x00, 0x00 };
+    responseLen = sizeof(response);
+
+    if (pn532_in_data_exchange(&io_handle,
+            getUid, sizeof(getUid),
+            response, &responseLen) != ESP_OK)
+    {
+        ESP_LOGE(TAG, "GET UID failed");
+        return false;
+    }
+
+    // response: <uid bytes> 90 00 — strip trailing status bytes
+    if (responseLen < 3)
+    {
+        ESP_LOGE(TAG, "Response too short: %d", responseLen);
+        return false;
+    }
+
+    uid_length = responseLen - 2;
+    memcpy(uid, response, uid_length);
+
+    memset(uid_string, 0, sizeof(uid_string));
+    for (int i = 0; i < uid_length; i++)
+        sprintf(uid_string + strlen(uid_string), "%02X", uid[i]);
+
+    ESP_LOGI(TAG, "Phone UID: %s", uid_string);
     return true;
 }
 

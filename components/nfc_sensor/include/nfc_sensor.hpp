@@ -21,6 +21,7 @@ public:
     esp_err_t writeBlock(uint8_t sector, uint8_t block_within_sector, const char *str);
 
     bool readCard();
+    bool exchangeDataWithPhone();
     
     char uid_string[32] = {0};
     

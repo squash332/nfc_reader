@@ -26,12 +26,16 @@ extern "C" void app_main()
     while (true)
     {   
         // dont forget to set AP to 2.4 GHz (tested on ESP32S3 devkitc1 - only supports 2.4 GHz)
-        if (wifi_status == WIFI_SUCCESS && pn532.readCard())
+        if (wifi_status == WIFI_SUCCESS)
         {
-            send_POST(pn532.uid_string);
-            vTaskDelay(pdMS_TO_TICKS(500));
+            if (pn532.exchangeDataWithPhone())
+                send_POST(pn532.uid_string);
+            else if (pn532.readCard()) {
+                send_POST(pn532.uid_string);
+                vTaskDelay(pdMS_TO_TICKS(1500));
+            }
         }
 
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        vTaskDelay(pdMS_TO_TICKS(500));
     }
 }

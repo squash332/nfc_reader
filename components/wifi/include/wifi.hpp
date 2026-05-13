@@ -5,7 +5,7 @@
 #include "nvs_flash.h"
 #include "esp_event.h"
 
-#define MAX_FAILURES 3
+#define MAX_FAILURES 5
 
 #define WIFI_SUCCESS BIT0
 #define WIFI_FAILURE BIT1
