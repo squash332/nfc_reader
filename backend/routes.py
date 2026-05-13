@@ -597,22 +597,36 @@ def get_user_stats(user_id: int):
     for e in events:
         date, etype = e["event_time"][:10], e["event_type"]
         if date not in by_date:
-            by_date[date] = {}
-        if etype == "in" and "in" not in by_date[date]:
-            by_date[date]["in"] = e["event_time"][11:16]
-        if etype == "out":
-            by_date[date]["out"] = e["event_time"][11:16]
+            by_date[date] = []
+        by_date[date].append({"type": etype, "time": e["event_time"][11:16]})
 
-    days_present = sum(1 for d in by_date.values() if "in" in d)
+    days_present = sum(1 for evs in by_date.values() if any(e["type"] == "in" for e in evs))
 
     durations = []
-    for d in by_date.values():
-        if "in" in d and "out" in d:
-            ih, im = map(int, d["in"].split(":"))
-            oh, om = map(int, d["out"].split(":"))
-            dur = (oh * 60 + om) - (ih * 60 + im)
-            if dur > 0:
-                durations.append(dur)
+    for day_events in by_date.values():
+        day_mins = 0
+        i = 0
+        while i < len(day_events):
+            if day_events[i]["type"] == "in":
+                in_time = day_events[i]["time"]
+                out_time = None
+                for j in range(i + 1, len(day_events)):
+                    if day_events[j]["type"] == "out":
+                        out_time = day_events[j]["time"]
+                        i = j + 1
+                        break
+                if out_time is None:
+                    i += 1
+                if out_time:
+                    ih, im = map(int, in_time.split(":"))
+                    oh, om = map(int, out_time.split(":"))
+                    dur = (oh * 60 + om) - (ih * 60 + im)
+                    if dur > 0:
+                        day_mins += dur
+            else:
+                i += 1
+        if day_mins > 0:
+            durations.append(day_mins)
 
     avg_minutes   = round(sum(durations) / len(durations)) if durations else None
     total_minutes = sum(durations)

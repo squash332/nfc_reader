@@ -300,8 +300,7 @@ function enterEditMode(tag) {
     };
 
     li.querySelector('.edit-cancel').onclick = () => loadTags();
-    const emailInput = li.querySelector('.edit-user');
-    attachEmailAutocomplete(emailInput);
+    attachAutocomplete(li.querySelector('.edit-user'), () => allUsers);
     li.querySelector('.edit-input').focus();
 }
 
