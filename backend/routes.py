@@ -1,6 +1,8 @@
 import re
 import secrets
 import string
+import smtplib
+from email.mime.text import MIMEText
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter
@@ -215,6 +217,22 @@ def _generate_code():
     raw = ''.join(secrets.choice(chars) for _ in range(6))
     return f"{raw[:3]}-{raw[3:]}"
 
+def _send_claim_email(to_email: str, code: str):
+    mail_from = os.getenv("MAIL_FROM", "")
+    mail_password = os.getenv("MAIL_PASSWORD", "")
+    if not mail_from or not mail_password:
+        return
+
+    body = f"Your SENTINEL access code is: {code}\n\nEnter this code in the app to activate your NFC access. It expires in 48 hours and can only be used once."
+    msg = MIMEText(body)
+    msg["Subject"] = "Your SENTINEL Access Code"
+    msg["From"] = mail_from
+    msg["To"] = to_email
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(mail_from, mail_password)
+        smtp.sendmail(mail_from, to_email, msg.as_string())
+
 @router.post("/tag")
 def receive_tag(data: Tag):
     conn = get_connection()
@@ -258,6 +276,9 @@ def receive_tag(data: Tag):
 
     conn.commit()
     conn.close()
+
+    if claim_code and data.email:
+        _send_claim_email(data.email, claim_code)
 
     return {"status": "ok", "added_tag": card_uid, "claim_code": claim_code}
 
@@ -326,6 +347,21 @@ def get_tags():
             for r in rows
         ]
     }
+
+@router.get("/tag/{uid}")
+def get_tag(uid:str):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT card_uid, is_active FROM cards WHERE card_uid = ?", (uid,))
+    row = cursor.fetchone()
+
+    if row is None:
+        return {"status": "not found"}
+    if not row["is_active"]:
+        return {"status": "inactive"}
+    
+    return {"status": "ok", "card_uid": row["card_uid"]}
 
 
 @router.delete("/tag/{uid}")

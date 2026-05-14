@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import RedirectResponse, JSONResponse
 
-_env = Path(__file__).parent / ".env"
+_env = Path(__file__).parent.parent / ".env"
 if _env.exists():
     for _line in _env.read_text().splitlines():
         if "=" in _line and not _line.startswith("#"):
@@ -31,6 +31,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         path = request.url.path
 
         if path.startswith("/static") or path in EXEMPT:
+            return await call_next(request)
+
+        if request.method == "GET" and path.startswith("/tag/"):
             return await call_next(request)
 
         if API_KEY and request.headers.get("X-API-Key") == API_KEY:
