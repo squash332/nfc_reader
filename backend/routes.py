@@ -631,10 +631,13 @@ def get_user_stats(user_id: int):
 
     by_date = {}
     for e in events:
-        date, etype = e["event_time"][:10], e["event_type"]
+        local_dt = datetime.fromisoformat(e["event_time"]).replace(tzinfo=timezone.utc).astimezone()
+        date = local_dt.strftime("%Y-%m-%d")
+        etime = local_dt.strftime("%H:%M")
+        etype = e["event_type"]
         if date not in by_date:
             by_date[date] = []
-        by_date[date].append({"type": etype, "time": e["event_time"][11:16]})
+        by_date[date].append({"type": etype, "time": etime})
 
     days_present = sum(1 for evs in by_date.values() if any(e["type"] == "in" for e in evs))
 
@@ -664,8 +667,8 @@ def get_user_stats(user_id: int):
         if day_mins > 0:
             durations.append(day_mins)
 
-    avg_minutes   = round(sum(durations) / len(durations)) if durations else None
     total_minutes = sum(durations)
+    avg_minutes   = round(total_minutes / days_present) if days_present else None
 
     cursor.execute(
         """
