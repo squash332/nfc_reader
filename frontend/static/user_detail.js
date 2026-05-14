@@ -84,7 +84,7 @@ async function loadUserInfo() {
         emailEl.href = `/register?user_id=${userId}`;
     }
     if (u.created_at) {
-        const since = new Date(u.created_at.replace(' ', 'T'))
+        const since = new Date(u.created_at.replace(' ', 'T') + 'Z')
             .toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
         document.getElementById('ud-since').textContent = `SINCE ${since.toUpperCase()}`;
     }
@@ -97,7 +97,7 @@ async function loadStats() {
     document.getElementById('stat-total').textContent = fmtMins(data.total_minutes);
 
     if (data.last_seen) {
-        const d = new Date(data.last_seen.replace(' ', 'T'));
+        const d = new Date(data.last_seen.replace(' ', 'T') + 'Z');
         const isToday = d.toDateString() === new Date().toDateString();
         document.getElementById('stat-last').textContent = isToday
             ? `TODAY ${data.last_seen.slice(11, 16)}`

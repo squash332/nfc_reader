@@ -13,7 +13,7 @@ let activeUserFilter = '';
 
 function formatTimestamp(raw) {
     // Handles both "2025-01-15T14:32:00" and "2025-01-15 14:32:00"
-    const dt = new Date(raw.replace(' ', 'T'));
+    const dt = new Date(raw.replace(' ', 'T') + 'Z');
     if (isNaN(dt)) return { date: '', time: raw };
     const date = dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const time = dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
