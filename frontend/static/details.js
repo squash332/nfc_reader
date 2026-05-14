@@ -68,6 +68,7 @@ function renderDetails(events) {
             </div>
             <div class="log-user">${e.user_id && e.full_name ? `<a href="/user/${e.user_id}" class="user-link">${e.full_name}</a>` : (e.full_name ?? '—')}</div>
             <div class="log-email">${e.email && e.user_id ? `<a href="/register?user_id=${e.user_id}" class="user-link">${e.email}</a>` : (e.email ?? '—')}</div>
+            <div class="log-card"><a href="/?card=${encodeURIComponent(e.card_uid)}" class="user-link">${e.card_uid ?? '—'}</a></div>
             <div>
                 <span class="log-badge ${badgeClass}">
                     <span class="badge-dot"></span>
