@@ -787,10 +787,10 @@ def scan_event(data: ScanEvent):
         conn.close()
         return {"status": "rejected"}
 
-    # card active and assigned — determine in/out from last event
+    # determine in/out from the user's last event across all their cards
     cursor.execute(
-        "SELECT event_type FROM events WHERE card_id = ? ORDER BY event_time DESC LIMIT 1",
-        (card["id"],),
+        "SELECT event_type FROM events WHERE user_id = ? AND event_type != 'rejected' ORDER BY event_time DESC LIMIT 1",
+        (card["user_id"],),
     )
     last = cursor.fetchone()
     event_type = "out" if last and last["event_type"] == "in" else "in"
