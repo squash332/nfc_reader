@@ -789,11 +789,15 @@ def scan_event(data: ScanEvent):
 
     # determine in/out from the user's last event across all their cards
     cursor.execute(
-        "SELECT event_type FROM events WHERE user_id = ? AND event_type != 'rejected' ORDER BY event_time DESC LIMIT 1",
+        "SELECT event_type, event_time FROM events WHERE user_id = ? AND event_type != 'rejected' ORDER BY event_time DESC LIMIT 1",
         (card["user_id"],),
     )
     last = cursor.fetchone()
-    event_type = "out" if last and last["event_type"] == "in" else "in"
+    if last and last["event_type"] == "in":
+        hours_since = (datetime.now() - datetime.fromisoformat(last["event_time"])).total_seconds() / 3600
+        event_type = "out" if hours_since < 8 else "in"
+    else:
+        event_type = "in"
 
     cursor.execute(
         "INSERT INTO events (card_id, user_id, event_type) VALUES (?, ?, ?)",

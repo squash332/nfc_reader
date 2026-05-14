@@ -100,7 +100,7 @@ async function loadStats() {
         const d = new Date(data.last_seen.replace(' ', 'T') + 'Z');
         const isToday = d.toDateString() === new Date().toDateString();
         document.getElementById('stat-last').textContent = isToday
-            ? `TODAY ${data.last_seen.slice(11, 16)}`
+            ? `TODAY ${d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
             : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase();
     }
 }
@@ -139,11 +139,17 @@ async function loadCards() {
 
 // ── EVENT GROUPING ────────────────────────────────────────────────────────────
 
+function parseLocalDateTime(raw) {
+    const dt = new Date(raw.replace(' ', 'T') + 'Z');
+    const date = dt.toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
+    const time = dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    return { date, time };
+}
+
 function groupByDate(events) {
     const map = {};
     events.forEach(e => {
-        const date = e.event_time.slice(0, 10);
-        const time = e.event_time.slice(11, 16);
+        const { date, time } = parseLocalDateTime(e.event_time);
         if (!map[date]) map[date] = { in: null, out: null, rejected: null, allEvents: [] };
 
         map[date].allEvents.push({ type: e.event_type, time });
