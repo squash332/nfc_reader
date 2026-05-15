@@ -174,6 +174,24 @@ function calcDuration(inTime, outTime) {
 
 // ── CALENDAR CELLS ────────────────────────────────────────────────────────────
 
+function calcTotalMins(allEvents) {
+    let total = 0, i = 0;
+    while (i < allEvents.length) {
+        if (allEvents[i].type === 'in') {
+            const inTime = allEvents[i].time;
+            let outTime = null;
+            for (let j = i + 1; j < allEvents.length; j++) {
+                if (allEvents[j].type === 'out') { outTime = allEvents[j].time; i = j + 1; break; }
+            }
+            if (outTime === null) { i++; continue; }
+            const [ih, im] = inTime.split(':').map(Number);
+            const [oh, om] = outTime.split(':').map(Number);
+            total += Math.max(0, (oh * 60 + om) - (ih * 60 + im));
+        } else { i++; }
+    }
+    return total;
+}
+
 function buildDayCell(dayNum, d, isToday, isOtherMonth = false) {
     const cell = document.createElement('div');
     cell.className = 'cal-day';
@@ -183,7 +201,9 @@ function buildDayCell(dayNum, d, isToday, isOtherMonth = false) {
     else if (d?.in)       cell.classList.add('has-in-only');
     if (d?.rejected)      cell.classList.add('has-rejected');
 
-    const duration = (d?.in && d?.out) ? calcDuration(d.in, d.out) : '';
+    const totalMins = d?.allEvents?.length ? calcTotalMins(d.allEvents) : 0;
+    const h = Math.floor(totalMins / 60), m = totalMins % 60;
+    const duration = totalMins > 0 ? (h ? `${h}h ${m}m` : `${m}m`) : '';
 
     cell.innerHTML = `
         <span class="cal-day-num">${dayNum}</span>
@@ -205,7 +225,7 @@ function buildWeekDayCell(dateObj, d, isToday) {
     else if (d?.in)      cell.classList.add('has-in-only');
 
     let sessionsHTML = '';
-    let totalMins = 0;
+    const totalMins = d?.allEvents?.length ? calcTotalMins(d.allEvents) : 0;
 
     if (d?.allEvents?.length) {
         const evs = d.allEvents;
@@ -218,12 +238,7 @@ function buildWeekDayCell(dateObj, d, isToday) {
                     if (evs[j].type === 'out') { outTime = evs[j].time; i = j + 1; break; }
                 }
                 if (outTime === null) i++;
-                const dur = (inTime && outTime) ? calcDuration(inTime, outTime) : '';
-                if (dur) {
-                    const [ih, im] = inTime.split(':').map(Number);
-                    const [oh, om] = outTime.split(':').map(Number);
-                    totalMins += Math.max(0, (oh * 60 + om) - (ih * 60 + im));
-                }
+                const dur = outTime ? calcDuration(inTime, outTime) : '';
                 sessionsHTML += `
                     <div class="cal-week-session${outTime ? '' : ' session-open'}">
                         <span class="cal-time cal-time-in">▲ ${inTime}</span>

@@ -2,12 +2,14 @@ import { initAuth } from './auth_guard.js';
 initAuth();
 
 const apiUrl = 'http://127.0.0.1:8000/details/data';
-const tagApiUrl = 'http://127.0.0.1:8000/tag';
+const tagApiUrl = 'http://127.0.0.1:8000/tag/search';
 
 let cachedEvents = [];
 let activeRange = 'day';
 let activeEventType = '';
 let activeUserFilter = '';
+let activeStartDate = null;
+let activeEndDate = null;
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -211,18 +213,24 @@ setRangeLabel('Last 24 hours');
 
 document.getElementById('day-btn').addEventListener('click', () => {
     activeRange = 'day';
+    activeStartDate = null;
+    activeEndDate = null;
     setActiveRange('day-btn', 'Last 24 hours');
     loadDetails('day');
 });
 
 document.getElementById('week-btn').addEventListener('click', () => {
     activeRange = 'week';
+    activeStartDate = null;
+    activeEndDate = null;
     setActiveRange('week-btn', 'Last 7 days');
     loadDetails('week');
 });
 
 document.getElementById('month-btn').addEventListener('click', () => {
     activeRange = 'month';
+    activeStartDate = null;
+    activeEndDate = null;
     setActiveRange('month-btn', 'Last 30 days');
     loadDetails('month');
 });
@@ -246,6 +254,8 @@ document.getElementById('get-data-btn').addEventListener('click', () => {
     document.querySelector('.filter-tab[data-type=""]').classList.add('active');
 
     activeRange = 'custom';
+    activeStartDate = from;
+    activeEndDate = to;
     const [fromDate, toDate] = [new Date(from), new Date(to)];
     const opts = { day: 'numeric', month: 'short', year: 'numeric' };
     setRangeLabel(`${fromDate.toLocaleDateString(undefined, opts)} → ${toDate.toLocaleDateString(undefined, opts)}`);
@@ -258,7 +268,9 @@ document.getElementById('clear-date-btn').addEventListener('click', () => {
     document.querySelector('.date-control-from')._flatpickr.clear();
     document.querySelector('.date-control-to')._flatpickr.clear();
 
-
+    activeRange = 'day';
+    activeStartDate = null;
+    activeEndDate = null;
     setActiveRange('day-btn', 'Last 24 hours');
     document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
     document.querySelector('.filter-tab[data-type=""]').classList.add('active');
@@ -287,13 +299,13 @@ document.getElementById('search-user-input').addEventListener('keydown', e => {
 document.getElementById('filter-user-input').addEventListener('input', e => {
     if (e.target.value === '') {
         activeUserFilter = '';
-        loadDetails(activeRange);
+        loadDetails(activeRange, activeStartDate, activeEndDate);
     }
 });
 
 document.getElementById('filter-user-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') {
         activeUserFilter = e.target.value.trim();
-        loadDetails(activeRange);
+        loadDetails(activeRange, activeStartDate, activeEndDate);
     }
 });
