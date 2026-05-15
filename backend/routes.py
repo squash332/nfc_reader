@@ -482,7 +482,7 @@ def show_details(
     return {"events": [dict(r) for r in event_rows]}
 
 
-@router.get("/tag/{full_name}")
+@router.get("/tag/search/{full_name}")
 def get_user_tags(full_name: str):
     conn = get_connection()
     cursor = conn.cursor()
