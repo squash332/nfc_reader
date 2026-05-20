@@ -7,7 +7,7 @@ static esp_http_client_handle_t client = NULL;
 void http_init(void)
 {
     esp_http_client_config_t cfg = {};
-    cfg.url = "http://10.139.89.78:8000/event"; 
+    cfg.url = "http://10.138.208.78:8000/event"; 
     cfg.method = HTTP_METHOD_POST;
     cfg.cert_pem = NULL;
     cfg.timeout_ms = 2000;
