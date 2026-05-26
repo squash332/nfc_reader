@@ -1,8 +1,6 @@
 #pragma once
 
 #include "esp_camera.h"
-#include "raw_img.hpp"
-#include <memory>
 
 static constexpr camera_config_t DEFAULT_CAMERA_CONFIG{
     .pin_pwdn = -1,
@@ -25,7 +23,7 @@ static constexpr camera_config_t DEFAULT_CAMERA_CONFIG{
     .ledc_timer = LEDC_TIMER_0,
     .ledc_channel = LEDC_CHANNEL_0,
     .pixel_format = PIXFORMAT_JPEG,
-    .frame_size = FRAMESIZE_QQVGA,      // 160x120, compressed JPEG ~3-8KB — fits in DRAM
+    .frame_size = FRAMESIZE_QQVGA,  // 160x120, ~3-8KB compressed
     .jpeg_quality = 12,
     .fb_count = 1,
     .fb_location = CAMERA_FB_IN_DRAM,
@@ -33,28 +31,17 @@ static constexpr camera_config_t DEFAULT_CAMERA_CONFIG{
     .sccb_i2c_port = 1,
 };
 
-
-
 class Camera
 {
 public:
     Camera(camera_config_t config);
-
     Camera();
-
     ~Camera();
 
-    Camera(Camera &obj) = delete;
+    Camera(const Camera &) = delete;
+    Camera &operator=(const Camera &) = delete;
 
-    Camera &operator=(Camera &obj) = delete;
-
-    // Captures a JPEG frame and passes its bytes to the callback.
-    // The buffer is only valid inside the callback — do not store the pointer.
+    // Captures one JPEG frame and passes it to the callback.
+    // Buffer is only valid inside the callback.
     void stream_frame(void (*callback)(const uint8_t *buf, size_t len));
-
-    std::shared_ptr<rawImg> capture();
-
-private:
-    camera_config_t _config;
-    std::shared_ptr<rawImg> img_ = {std::make_unique<rawImg>()};
 };
