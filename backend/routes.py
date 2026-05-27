@@ -1,4 +1,5 @@
 import re
+import asyncio
 import secrets
 import string
 import smtplib
@@ -6,13 +7,18 @@ from email.mime.text import MIMEText
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 import os
 from typing import Optional
 
 from fastapi import Response, Request
 
 from fastapi import HTTPException
+
+# ── Camera state ──────────────────────────────────────────────────────────────
+_cam_active: bool       = False
+_latest_frame: bytes    = b""
+_frame_seq: int         = 0
 from auth import hash_pw, check_pw, make_token, read_token
 from database import get_connection
 from models import RedeemCode
@@ -797,6 +803,59 @@ def delete_user(user_id: int):
     conn.close()
     return {"status": "removed", "full_name": user["full_name"]}
 
+
+# ── Camera endpoints ──────────────────────────────────────────────────────────
+
+@router.post("/camera/start")
+def camera_start():
+    global _cam_active
+    _cam_active = True
+    return {"status": "ok"}
+
+
+@router.post("/camera/stop")
+def camera_stop():
+    global _cam_active
+    _cam_active = False
+    return {"status": "ok"}
+
+
+@router.get("/camera/command")
+def camera_command():
+    return {"active": _cam_active}
+
+
+@router.post("/camera/frame")
+async def camera_frame(request: Request):
+    global _latest_frame, _frame_seq
+    _latest_frame = await request.body()
+    _frame_seq += 1
+    return Response(status_code=204)
+
+
+async def _mjpeg_generator():
+    last_seq = -1
+    while True:
+        if _latest_frame and _frame_seq != last_seq:
+            last_seq = _frame_seq
+            yield (
+                b"--frame\r\n"
+                b"Content-Type: image/jpeg\r\n\r\n"
+                + _latest_frame
+                + b"\r\n"
+            )
+        await asyncio.sleep(0.05)
+
+
+@router.get("/camera/stream")
+async def camera_stream():
+    return StreamingResponse(
+        _mjpeg_generator(),
+        media_type="multipart/x-mixed-replace; boundary=frame",
+    )
+
+
+# ── NFC events ────────────────────────────────────────────────────────────────
 
 @router.post("/event")
 def scan_event(data: ScanEvent):
