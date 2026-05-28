@@ -10,11 +10,11 @@
 struct rawImg
 {
 
-    std::array<std::array<uint8_t, IMG_WIDTH>, IMG_HEIGHT> image;
+    std::array<std::array<uint8_t, IMG_WIDTH>, IMG_HEIGHT> _img;
 
     size_t imgHeight()
     {
-        return image.size();
+        return _img.size();
     }
 
     void fromFramebuffer(uint8_t *buf, size_t width, size_t height)
@@ -23,13 +23,13 @@ struct rawImg
         {
             for (int col = 0; col < width; col++)
             {
-                image[row][col] = buf[row * width + col];
+                _img[row][col] = buf[row * width + col];
             }
         }
     }
 
     uint8_t getPixel(int row, int col)
     {
-        return image[row][col];
+        return _img[row][col];
     }
 };

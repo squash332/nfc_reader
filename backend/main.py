@@ -22,7 +22,8 @@ from routes import router, static_directory
 
 app = FastAPI()
 
-EXEMPT       = {"/login", "/auth/login", "/auth/logout", "/event", "/tag/redeem"}
+EXEMPT       = {"/login", "/auth/login", "/auth/logout", "/event", "/tag/redeem", "/camera/start", "/camera/stop", 
+                "/camera/command", "/camera/frame", "/camera/stream" }
 SETUP_PATHS  = {"/register", "/auth/register"}
 
 

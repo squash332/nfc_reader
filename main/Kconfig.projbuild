@@ -12,4 +12,10 @@ menu "WiFi Configuration"
         help
             Password of the WiFi network.
 
+    config BASE_URL
+        string "Backend Base URL"
+        default "http://10.138.208.121:8000"
+        help
+            Base URL of the backend server (e.g. http://10.138.208.121:8000).
+
 endmenu
