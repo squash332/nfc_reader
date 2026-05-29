@@ -15,6 +15,7 @@ from typing import Optional
 from fastapi import Response, Request
 
 from fastapi import HTTPException
+from fastapi import WebSocket
 
 # ── Camera state ──────────────────────────────────────────────────────────────
 _cam_active: bool       = False
@@ -807,7 +808,7 @@ def delete_user(user_id: int):
 
 # ── Camera endpoints ──────────────────────────────────────────────────────────
 
-from fastapi import WebSocket
+
 
 @router.websocket("/camera/ws")
 async def camera_ws(websocket: WebSocket):

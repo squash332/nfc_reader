@@ -15,11 +15,11 @@ void ws_init()
     cfg.uri = WS_URL;
     cfg.reconnect_timeout_ms = 5000;
     cfg.network_timeout_ms = 5000;
-    cfg.buffer_size = 32768; // 32KB
+    cfg.buffer_size = 16400; // 
 
     ws_client = esp_websocket_client_init(&cfg);
     esp_websocket_client_start(ws_client);
-    vTaskDelay(pdMS_TO_TICKS(1000)); // wait for connection
+    vTaskDelay(pdMS_TO_TICKS(500)); // wait for connection
     ESP_LOGI(TAG, "WebSocket started");
 }
 
@@ -41,7 +41,7 @@ void send_frame(const uint8_t *buf, size_t len)
         ESP_LOGW(TAG, "WS not connected, skipping frame");
         return;
     }
-    int ret = esp_websocket_client_send_bin(ws_client, (const char *)buf, len, pdMS_TO_TICKS(5000));
+    int ret = esp_websocket_client_send_bin(ws_client, (const char *)buf, len, 0);
     if (ret < 0)
         ESP_LOGW(TAG, "WS send failed");
     else
@@ -53,7 +53,7 @@ void send_POST(const char *card_uid)
     esp_http_client_config_t cfg = {};
     cfg.url = BASE_URL "/event";
     cfg.method = HTTP_METHOD_POST;
-    cfg.timeout_ms = 2000;
+    cfg.timeout_ms = 3000;
 
     esp_http_client_handle_t c = esp_http_client_init(&cfg);
     if (!c)
