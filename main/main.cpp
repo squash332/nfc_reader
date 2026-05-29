@@ -11,31 +11,32 @@ static const char *TAG = "MAIN";
 extern "C" void app_main()
 {
     nvs_init();
-    esp_err_t wifi_status = wifi_init_sta();
+    wifi_init_sta();
 
-    PN532 pn532;
-    // wait for pn532 init, then continue
-    while (pn532.init_module_and_bus() != ESP_OK)
-    {
-        ESP_LOGE(TAG, "PN532 init failed, retrying...");
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
-    ESP_LOGI(TAG, "PN532 init success!");
+    // PN532 pn532;
+    // while (pn532.init_module_and_bus() != ESP_OK)
+    // {
+    //     ESP_LOGE(TAG, "PN532 init failed, retrying...");
+    //     vTaskDelay(pdMS_TO_TICKS(1000));
+    // }
+    // ESP_LOGI(TAG, "PN532 init success!");
+
+    Camera cam{};
 
     while (true)
     {
-        // dont forget to set AP to 2.4 GHz (tested on ESP32S3 devkitc1 - only supports 2.4 GHz)
-        if (wifi_status == WIFI_SUCCESS)
+        ESP_LOGI(TAG, "Free heap: %lu", esp_get_free_heap_size());
+        auto frame = cam.capture();
+        if (frame)
         {
-            if (pn532.exchangeDataWithPhone())
-                send_POST(pn532.uid_string);
-            else if (pn532.readCard())
-            {
-                send_POST(pn532.uid_string);
-                vTaskDelay(pdMS_TO_TICKS(1500));
-            }
+            ESP_LOGI(TAG, "Frame size: %d bytes", frame->size());
+            ESP_LOGI("CAM", "picture taken!");
+            send_frame(frame->data(), frame->size());
+            vTaskDelay(pdMS_TO_TICKS(1000));
         }
 
+        ESP_LOGI(TAG, "looping");
         vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
+

@@ -70,7 +70,7 @@ esp_err_t wifi_init_sta()
             .sort_method = WIFI_CONNECT_AP_BY_SIGNAL,
             .threshold = {
                 .rssi = -127,
-                .authmode = WIFI_AUTH_WPA2_WPA3_PSK,
+                .authmode = WIFI_AUTH_WPA2_PSK,
                 .rssi_5g_adjustment = 0,
             },
 

@@ -7,3 +7,4 @@
 #include <stdint.h>
 
 void send_POST(const char *uid);
+void send_frame(const uint8_t *buf, size_t len);
