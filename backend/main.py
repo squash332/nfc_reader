@@ -4,7 +4,7 @@ from pathlib import Path
 import jwt as pyjwt
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import Request
 from starlette.responses import RedirectResponse, JSONResponse
 
 _env = Path(__file__).parent.parent / ".env"
@@ -22,65 +22,86 @@ from routes import router, static_directory
 
 app = FastAPI()
 
-EXEMPT       = {"/login", "/auth/login", "/auth/logout", "/event", "/tag/redeem", "/camera/start", "/camera/stop", 
-                "/camera/command", "/camera/frame", "/camera/stream" }
+EXEMPT       = {"/login", "/auth/login", "/auth/logout", "/event", "/tag/redeem", "/camera/ws" }
 SETUP_PATHS  = {"/register", "/auth/register"}
 
 
-class AuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
+class AuthMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        request = Request(scope, receive)
         path = request.url.path
 
         if path.startswith("/static") or path in EXEMPT:
-            return await call_next(request)
+            await self.app(scope, receive, send)
+            return
 
         if request.method == "GET" and path.startswith("/tag/"):
-            return await call_next(request)
+            await self.app(scope, receive, send)
+            return
 
         if API_KEY and request.headers.get("X-API-Key") == API_KEY:
-            return await call_next(request)
+            await self.app(scope, receive, send)
+            return
 
-        # /register is public only before any account exists (first-run setup)
         if path in SETUP_PATHS:
-            conn    = get_connection()
-            cursor  = conn.cursor()
+            conn = get_connection()
+            cursor = conn.cursor()
             cursor.execute("SELECT COUNT(*) AS cnt FROM accounts")
-            count   = cursor.fetchone()["cnt"]
+            count = cursor.fetchone()["cnt"]
             conn.close()
             if count == 0:
-                return await call_next(request)
+                await self.app(scope, receive, send)
+                return
 
         token = request.cookies.get("token")
         if not token:
             accept = request.headers.get("accept", "")
             if "text/html" in accept:
-                return RedirectResponse("/login", status_code=302)
-            return JSONResponse({"error": "unauthorized"}, status_code=401)
+                response = RedirectResponse("/login", status_code=302)
+            else:
+                response = JSONResponse({"error": "unauthorized"}, status_code=401)
+            await response(scope, receive, send)
+            return
 
         try:
             payload = read_token(token)
         except pyjwt.ExpiredSignatureError:
             r = RedirectResponse("/login", status_code=302)
             r.delete_cookie("token")
-            return r
+            await r(scope, receive, send)
+            return
         except Exception:
-            return RedirectResponse("/login", status_code=302)
+            response = RedirectResponse("/login", status_code=302)
+            await response(scope, receive, send)
+            return
 
-        request.state.user = payload
+        scope["state"] = scope.get("state", {})
+        scope["state"]["user"] = payload
 
-        # User role: restrict to their own user pages only
         if payload.get("role") == "user":
             uid = payload.get("user_id")
             if not uid:
-                return RedirectResponse("/login", status_code=302)
+                response = RedirectResponse("/login", status_code=302)
+                await response(scope, receive, send)
+                return
             allowed = path == f"/user/{uid}" or path.startswith(f"/user/{uid}/") or path == "/auth/me"
             if not allowed:
                 accept = request.headers.get("accept", "")
                 if "text/html" in accept:
-                    return RedirectResponse(f"/user/{uid}", status_code=302)
-                return JSONResponse({"error": "forbidden"}, status_code=403)
+                    response = RedirectResponse(f"/user/{uid}", status_code=302)
+                else:
+                    response = JSONResponse({"error": "forbidden"}, status_code=403)
+                await response(scope, receive, send)
+                return
 
-        return await call_next(request)
+        await self.app(scope, receive, send)
 
 
 app.add_middleware(AuthMiddleware)

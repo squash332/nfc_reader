@@ -12,3 +12,4 @@ backend/tags.json
 backend/database.db
 *.pyc
 backend/__pycache__/
+**/Kconfig.projbuild

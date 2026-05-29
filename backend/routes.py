@@ -5,6 +5,7 @@ import string
 import smtplib
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta, timezone
+from starlette.requests import ClientDisconnect
 
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -806,32 +807,26 @@ def delete_user(user_id: int):
 
 # ── Camera endpoints ──────────────────────────────────────────────────────────
 
-@router.post("/camera/start")
-def camera_start():
-    global _cam_active
-    _cam_active = True
-    return {"status": "ok"}
+from fastapi import WebSocket
 
-
-@router.post("/camera/stop")
-def camera_stop():
-    global _cam_active
-    _cam_active = False
-    return {"status": "ok"}
-
-
-@router.get("/camera/command")
-def camera_command():
-    return {"active": _cam_active}
-
-
-@router.post("/camera/frame")
-async def camera_frame(request: Request):
+@router.websocket("/camera/ws")
+async def camera_ws(websocket: WebSocket):
     global _latest_frame, _frame_seq
-    _latest_frame = await request.body()
-    _frame_seq += 1
-    return Response(status_code=204)
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_bytes()
+            _latest_frame = data
+            _frame_seq += 1
+    except Exception:
+        pass
 
+@router.get("/camera/stream")
+async def camera_stream():
+    return StreamingResponse(
+        _mjpeg_generator(),
+        media_type="multipart/x-mixed-replace; boundary=frame",
+    )
 
 async def _mjpeg_generator():
     last_seq = -1
@@ -845,15 +840,6 @@ async def _mjpeg_generator():
                 + b"\r\n"
             )
         await asyncio.sleep(0.05)
-
-
-@router.get("/camera/stream")
-async def camera_stream():
-    return StreamingResponse(
-        _mjpeg_generator(),
-        media_type="multipart/x-mixed-replace; boundary=frame",
-    )
-
 
 # ── NFC events ────────────────────────────────────────────────────────────────
 

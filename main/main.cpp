@@ -1,42 +1,28 @@
-#include <stdio.h>
-#include "esp_log.h"
-#include "wifi.hpp"
-#include "http_client.hpp"
-#include "nfc_sensor.hpp"
-#include <pn532.h>
-#include "camera.hpp"
+#include "helpers.hpp"
 
 static const char *TAG = "MAIN";
 
 extern "C" void app_main()
 {
-    nvs_init();
-    wifi_init_sta();
-
-    // PN532 pn532;
-    // while (pn532.init_module_and_bus() != ESP_OK)
-    // {
-    //     ESP_LOGE(TAG, "PN532 init failed, retrying...");
-    //     vTaskDelay(pdMS_TO_TICKS(1000));
-    // }
-    // ESP_LOGI(TAG, "PN532 init success!");
-
-    Camera cam{};
+    app_init();
+    imgBufferQueue = xQueueCreate(2, sizeof(std::vector<uint8_t> *));
+    xTaskCreatePinnedToCore(sendBufferTask, "sendBufferTask", 8192, NULL, 5, &sendBufferHandle, 1);
 
     while (true)
     {
         ESP_LOGI(TAG, "Free heap: %lu", esp_get_free_heap_size());
-        auto frame = cam.capture();
+        auto frame = cam->capture();
         if (frame)
         {
-            ESP_LOGI(TAG, "Frame size: %d bytes", frame->size());
-            ESP_LOGI("CAM", "picture taken!");
-            send_frame(frame->data(), frame->size());
-            vTaskDelay(pdMS_TO_TICKS(1000));
+            auto *raw = new std::vector<uint8_t>(*frame);
+            if (xQueueSend(imgBufferQueue, &raw, 0) != pdTRUE)
+            {
+                delete raw; 
+                ESP_LOGW(TAG, "Queue full, dropping frame");
+            }
         }
 
         ESP_LOGI(TAG, "looping");
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
-

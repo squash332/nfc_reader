@@ -1,42 +1,51 @@
 #include "http_client.hpp"
-
 static const char *TAG = "HTTP_CLIENT";
-
 #define BASE_URL CONFIG_BASE_URL
+#define WS_URL CONFIG_WS_URL
 
-static esp_http_client_handle_t frame_client = NULL;
+static esp_websocket_client_handle_t ws_client = NULL;
 
-static void frame_client_init()
+bool ws_is_connected() {
+    return ws_client && esp_websocket_client_is_connected(ws_client);
+}
+
+void ws_init()
 {
-    esp_http_client_config_t cfg = {};
-    cfg.url = BASE_URL "/camera/frame";
-    cfg.method = HTTP_METHOD_POST;
-    cfg.timeout_ms = 4000;
-    frame_client = esp_http_client_init(&cfg);
+    esp_websocket_client_config_t cfg = {};
+    cfg.uri = WS_URL;
+    cfg.reconnect_timeout_ms = 5000;
+    cfg.network_timeout_ms = 5000;
+    cfg.buffer_size = 32768; // 32KB
+
+    ws_client = esp_websocket_client_init(&cfg);
+    esp_websocket_client_start(ws_client);
+    vTaskDelay(pdMS_TO_TICKS(1000)); // wait for connection
+    ESP_LOGI(TAG, "WebSocket started");
 }
 
 void send_frame(const uint8_t *buf, size_t len)
 {
-    if (!frame_client)
-        frame_client_init();
-    if (!frame_client)
+    if (!ws_client)
     {
-        ESP_LOGE(TAG, "frame client init failed");
+        ESP_LOGE(TAG, "WS client not initialized");
+        return;
+    }
+    if (!buf || len == 0)
+    {
+        ESP_LOGE(TAG, "Invalid frame data");
         return;
     }
 
-    esp_http_client_set_header(frame_client, "Content-Type", "image/jpeg");
-    esp_http_client_set_post_field(frame_client, (const char *)buf, len);
-
-    esp_err_t err = esp_http_client_perform(frame_client);
-    if (err == ESP_OK)
-        ESP_LOGI(TAG, "Frame ok, status=%d", esp_http_client_get_status_code(frame_client));
-    else
+    if (!esp_websocket_client_is_connected(ws_client))
     {
-        ESP_LOGW(TAG, "Frame failed: %s — reconnecting", esp_err_to_name(err));
-        esp_http_client_cleanup(frame_client);
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        ESP_LOGW(TAG, "WS not connected, skipping frame");
+        return;
     }
+    int ret = esp_websocket_client_send_bin(ws_client, (const char *)buf, len, pdMS_TO_TICKS(5000));
+    if (ret < 0)
+        ESP_LOGW(TAG, "WS send failed");
+    else
+        ESP_LOGI(TAG, "Frame sent, %d bytes", len);
 }
 
 void send_POST(const char *card_uid)

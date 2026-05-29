@@ -54,7 +54,7 @@ static constexpr camera_config_t DEFAULT_CAMERA_CONFIG_EYE{
     .ledc_timer = LEDC_TIMER_0,
     .ledc_channel = LEDC_CHANNEL_0,
     .pixel_format = PIXFORMAT_JPEG,
-    .frame_size = FRAMESIZE_SVGA,
+    .frame_size = FRAMESIZE_QVGA,
     .jpeg_quality = 12,
     .fb_count = 2,
     .fb_location = CAMERA_FB_IN_PSRAM, // enable psram in menuconfig
