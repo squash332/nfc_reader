@@ -3,7 +3,6 @@
 #include "esp_timer.h"
 
 QueueHandle_t imgBufferQueue;
-Camera *cam = nullptr;
 
 void app_init()
 {
@@ -19,10 +18,7 @@ void app_init()
     // }
     // ESP_LOGI(TAG, "PN532 init success!");
 
-    cam = new Camera{};
     ESP_LOGW("MAIN", "initializing...");
-    vTaskDelay(pdMS_TO_TICKS(1000));
-
     while (!ws_is_connected())
     {
         ESP_LOGI("WS", "not connected - retrying... ");
@@ -30,7 +26,7 @@ void app_init()
     }
 }
 
-static void drainQueue()
+void drainQueue()
 {
     std::vector<uint8_t> *stale = nullptr;
     while (xQueueReceive(imgBufferQueue, &stale, 0) == pdTRUE) {
@@ -41,7 +37,11 @@ static void drainQueue()
 
 void sendBufferTask(void *arg)
 {
+    if (!ws_is_connected())
+            return;
+
     std::vector<uint8_t> *frame = nullptr;
+
     while (true)
     {
         if (xQueueReceive(imgBufferQueue, &frame, portMAX_DELAY) != pdTRUE)
@@ -61,16 +61,7 @@ void sendBufferTask(void *arg)
             continue;
         }
 
-        if (!ws_is_connected())
-        {
-            ESP_LOGW("TASK", "WS disconnected, waiting for reconnect...");
-            delete frame;
-            frame = nullptr;
-            drainQueue();
-            while (!ws_is_connected())
-                vTaskDelay(pdMS_TO_TICKS(200));
-            continue;
-        }
+        
 
         int64_t start = esp_timer_get_time();
         bool ok = send_frame(frame->data(), frame->size());

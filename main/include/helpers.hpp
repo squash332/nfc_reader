@@ -10,8 +10,8 @@
 
 
 void app_init();
-void sendBufferTask(void *arg); 
+void sendBufferTask(void *arg);
+void drainQueue();
 
-extern Camera *cam;
 static TaskHandle_t sendBufferHandle;
 extern QueueHandle_t imgBufferQueue;
