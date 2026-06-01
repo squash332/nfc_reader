@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <title>SENTINEL — Camera</title>
+    <link rel="stylesheet" href="/static/fonts.css">
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/camera.css">
+    <script src="/static/topbar.js"></script>
+</head>
+<body>
+
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <div class="app">
+
+        <!-- ── TOP NAV ── -->
+        <app-topbar></app-topbar>
+
+        <!-- ── BODY ── -->
+        <div class="cam-layout">
+
+            <!-- ── SIDEBAR ── -->
+            <aside class="cam-sidebar">
+
+                <div class="cam-section">
+                    <div class="cam-section-title">FEED STATUS</div>
+                    <div class="cam-status">
+                        <span class="cam-status-dot" id="status-dot"></span>
+                        <span class="cam-status-label" id="status-label">CONNECTING</span>
+                    </div>
+                </div>
+
+                <div class="cam-section">
+                    <div class="cam-section-title">STREAM INFO</div>
+                    <div class="cam-info-row">
+                        <span class="cam-info-label">ENDPOINT</span>
+                        <span class="cam-info-value">/camera/stream</span>
+                    </div>
+                    <div class="cam-info-row">
+                        <span class="cam-info-label">FORMAT</span>
+                        <span class="cam-info-value">MJPEG</span>
+                    </div>
+                    <div class="cam-info-row">
+                        <span class="cam-info-label">TRANSPORT</span>
+                        <span class="cam-info-value">WebSocket</span>
+                    </div>
+                </div>
+
+                <div class="cam-section">
+                    <div class="cam-section-title">DEVICE</div>
+                    <div class="cam-info-row">
+                        <span class="cam-info-label">SENSOR</span>
+                        <span class="cam-info-value">OV2640</span>
+                    </div>
+                    <div class="cam-info-row">
+                        <span class="cam-info-label">RESOLUTION</span>
+                        <span class="cam-info-value">320 × 240</span>
+                    </div>
+                    <div class="cam-info-row">
+                        <span class="cam-info-label">FORMAT</span>
+                        <span class="cam-info-value">JPEG</span>
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- ── MAIN FEED ── -->
+            <main class="cam-main">
+
+                <div class="cam-header">
+                    <div>
+                        <div class="panel-title">CAMERA FEED</div>
+                        <div class="panel-sub">Live stream from ESP32-S3</div>
+                    </div>
+                </div>
+
+                <div class="cam-feed-wrap">
+                    <img id="cam-feed" class="cam-feed" src="/camera/stream" alt="Camera feed">
+                    <div class="cam-no-signal" id="cam-no-signal" style="display:none">
+                        <span class="cam-no-signal-icon">⊡</span>
+                        <div class="cam-no-signal-label">NO SIGNAL</div>
+                        <div class="cam-no-signal-sub">Waiting for ESP32 connection…</div>
+                    </div>
+                </div>
+
+            </main>
+
+        </div>
+
+    </div>
+
+    <script type="module" src="/static/camera.js"></script>
+</body>
+</html>

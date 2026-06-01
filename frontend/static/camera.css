@@ -1,0 +1,168 @@
+.cam-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ── SIDEBAR ── */
+.cam-sidebar {
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+}
+
+.cam-sidebar::-webkit-scrollbar { width: 4px; }
+.cam-sidebar::-webkit-scrollbar-thumb { background: var(--border-lit); border-radius: 2px; }
+
+.cam-section-title {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+}
+
+.cam-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cam-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    flex-shrink: 0;
+    transition: background 0.3s, box-shadow 0.3s;
+}
+
+.cam-status-dot.live {
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: dot-pulse 2s ease-in-out infinite;
+}
+
+.cam-status-dot.offline {
+    background: var(--red);
+    box-shadow: 0 0 6px var(--red);
+}
+
+@keyframes dot-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+}
+
+.cam-status-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-secondary);
+    transition: color 0.3s;
+}
+
+.cam-status-label.live    { color: var(--green); }
+.cam-status-label.offline { color: var(--red); }
+
+.cam-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.cam-info-row:last-child { border-bottom: none; }
+
+.cam-info-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+}
+
+.cam-info-value {
+    font-size: 10px;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+    text-align: right;
+}
+
+/* ── MAIN ── */
+.cam-main {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+}
+
+.cam-header {
+    padding: 16px 24px 14px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+/* ── FEED ── */
+.cam-feed-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-card);
+}
+
+.cam-feed {
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+    image-rendering: pixelated;
+    border: 1px solid var(--border);
+}
+
+/* ── NO SIGNAL OVERLAY ── */
+.cam-no-signal {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: var(--bg-card);
+}
+
+.cam-no-signal-icon {
+    font-size: 48px;
+    color: var(--text-dim);
+    animation: blink 2s step-end infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.2; }
+}
+
+.cam-no-signal-label {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    color: var(--text-secondary);
+}
+
+.cam-no-signal-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+}

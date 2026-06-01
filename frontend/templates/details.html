@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="static/styles.css">
     <link rel="stylesheet" href="static/flatpickr.min.css">
     <link rel="stylesheet" href="static/details.css">
+    <script src="static/topbar.js"></script>
 </head>
 
 <body>
@@ -18,33 +19,7 @@
     <div class="scanlines" aria-hidden="true"></div>
 
     <!-- ── TOP NAV ── -->
-    <header class="topbar">
-        <div class="topbar-brand">
-            <span class="logo-icon">◈</span>
-            <div>
-                <div class="logo-title">SENTINEL</div>
-                <div class="logo-sub">Access Control System</div>
-            </div>
-        </div>
-        <nav class="topbar-nav">
-            <a href="/" class="nav-item nav-admin">
-                <span class="nav-icon">⊞</span> Tag Manager
-            </a>
-            <span class="nav-item active nav-admin">
-                <span class="nav-icon">◧</span> Access Log
-            </span>
-            <a href="/users" class="nav-item nav-admin">
-                <span class="nav-icon">◉</span> Users
-            </a>
-            <a href="/register" class="nav-item nav-admin">
-                <span class="nav-icon">⊕</span> Accounts
-            </a>
-        </nav>
-        <div class="topbar-user">
-            <span class="topbar-email" id="topbar-email"></span>
-            <button class="topbar-logout-btn" id="topbar-logout">LOGOUT</button>
-        </div>
-    </header>
+    <app-topbar></app-topbar>
 
     <div class="layout">
 
