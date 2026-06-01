@@ -33,7 +33,7 @@ void ws_init()
     esp_websocket_client_config_t cfg = {};
     cfg.uri = WS_URL;
     cfg.reconnect_timeout_ms = 5000;
-    cfg.network_timeout_ms = 10000;
+    cfg.network_timeout_ms = 2000;
     cfg.ping_interval_sec = 10;
     cfg.buffer_size = 16400;
 
@@ -54,10 +54,10 @@ bool send_frame(const uint8_t *buf, size_t len)
         ESP_LOGW(TAG, "WS not connected, skipping frame");
         return false;
     }
-    int ret = esp_websocket_client_send_bin(ws_client, (const char *)buf, len, pdMS_TO_TICKS(2000));
-    if (ret < 0)
+    int ret = esp_websocket_client_send_bin(ws_client, (const char *)buf, len, portMAX_DELAY);
+    if (ret != (int)len)
     {
-        ESP_LOGW(TAG, "WS send failed");
+        ESP_LOGW(TAG, "WS send failed (ret=%d)", ret);
         return false;
     }
     ESP_LOGI(TAG, "Frame sent, %d bytes", len);

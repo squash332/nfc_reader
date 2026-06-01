@@ -28,7 +28,8 @@ extern "C" void app_main()
         else
         {
             ESP_LOGI(TAG, "waiting for websocket connection to open...");
+            vTaskDelay(pdMS_TO_TICKS(3000));
         }
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(150));
     }
 }
