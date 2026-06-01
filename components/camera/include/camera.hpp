@@ -1,7 +1,6 @@
 #pragma once
 
 #include "esp_camera.h"
-#include <memory>
 #include <vector>
 
 static constexpr camera_config_t DEFAULT_CAMERA_CONFIG{
@@ -72,9 +71,8 @@ public:
     Camera(const Camera &) = delete;
     Camera &operator=(const Camera &) = delete;
 
-    void measure_fps(uint16_t num_frames);
 
-    std::shared_ptr<std::vector<uint8_t>> capture();
+    std::vector<uint8_t> *capture();
 
 private:
     camera_config_t _config;

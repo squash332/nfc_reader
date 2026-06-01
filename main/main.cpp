@@ -12,16 +12,17 @@ extern "C" void app_main()
     {
         if (ws_is_connected())
         {
-            auto frame = cam->capture();
+            auto *frame = cam->capture();
             if (frame)
             {
-                auto *raw = new std::vector<uint8_t>(*frame);
-                if (xQueueSend(imgBufferQueue, &raw, 0) != pdTRUE)
+                ESP_LOGI(TAG, "frame captured — queue: %u/4", uxQueueMessagesWaiting(imgBufferQueue));
+                if (xQueueSend(imgBufferQueue, &frame, 0) != pdTRUE)
                 {
-                    delete raw;
+                    delete frame;
                     ESP_LOGW(TAG, "Queue full, dropping frame");
                 }
             }
+
         }
         vTaskDelay(pdMS_TO_TICKS(500));
     }

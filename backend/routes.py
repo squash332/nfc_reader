@@ -536,6 +536,13 @@ async def user_detail_page(user_id: int):
         return HTMLResponse(content=f.read())
 
 
+@router.get("/camera", response_class=HTMLResponse)
+async def camera_page():
+    path = os.path.join(static_directory, "../templates/camera.html")
+    with open(path, "r") as f:
+        return HTMLResponse(content=f.read())
+
+
 @router.get("/user/{user_id}/info")
 def get_user_info(user_id: int):
     conn = get_connection()
@@ -819,8 +826,8 @@ async def camera_ws(websocket: WebSocket):
             data = await websocket.receive_bytes()
             _latest_frame = data
             _frame_seq += 1
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[camera_ws] disconnected: {type(e).__name__}: {e}")
 
 @router.get("/camera/stream")
 async def camera_stream():

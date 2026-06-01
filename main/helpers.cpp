@@ -21,11 +21,21 @@ void app_init()
 
     cam = new Camera{};
     ESP_LOGW("MAIN", "initializing...");
-    vTaskDelay(pdMS_TO_TICKS(2000));
+    vTaskDelay(pdMS_TO_TICKS(1000));
 
     while (!ws_is_connected())
     {
+        ESP_LOGI("WS", "not connected - retrying... ");
         vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+static void drainQueue()
+{
+    std::vector<uint8_t> *stale = nullptr;
+    while (xQueueReceive(imgBufferQueue, &stale, 0) == pdTRUE) {
+        delete stale;
+        ESP_LOGI("DRAIN_QUEUE()", "deleted stale frame");
     }
 }
 
@@ -34,17 +44,48 @@ void sendBufferTask(void *arg)
     std::vector<uint8_t> *frame = nullptr;
     while (true)
     {
-        if (xQueueReceive(imgBufferQueue, &frame, portMAX_DELAY) == pdTRUE)
+        if (xQueueReceive(imgBufferQueue, &frame, portMAX_DELAY) != pdTRUE)
+            continue;
+
+        // discard bad frames keep only latest
+        std::vector<uint8_t> *newer = nullptr;
+        while (xQueueReceive(imgBufferQueue, &newer, 0) == pdTRUE)
         {
-            if (frame)
-            {
-                int64_t start = esp_timer_get_time();
-                send_frame(frame->data(), frame->size());
-                int64_t end = esp_timer_get_time();
-                ESP_LOGI("TEST", "Send took: %lld ms", (end - start) / 1000);
-                delete frame; // done with it
-                frame = nullptr;
-            }
+            delete frame;
+            frame = newer;
+            ESP_LOGI("sendBufferTask", "deleting stale frame.");
+        }
+
+        if (!frame) {
+            ESP_LOGI("no frame", "continuing...");
+            continue;
+        }
+
+        if (!ws_is_connected())
+        {
+            ESP_LOGW("TASK", "WS disconnected, waiting for reconnect...");
+            delete frame;
+            frame = nullptr;
+            drainQueue();
+            while (!ws_is_connected())
+                vTaskDelay(pdMS_TO_TICKS(200));
+            continue;
+        }
+
+        int64_t start = esp_timer_get_time();
+        bool ok = send_frame(frame->data(), frame->size());
+        int64_t elapsed = (esp_timer_get_time() - start) / 1000;
+        ESP_LOGI("TASK", "Send took: %lld ms", elapsed);
+
+        delete frame;
+        frame = nullptr;
+
+        if (!ok || elapsed > 1000)
+        {
+            drainQueue();
+            ESP_LOGW("TASK", "Send failed or slow, waiting for reconnect...");
+            while (!ws_is_connected())
+                vTaskDelay(pdMS_TO_TICKS(200));
         }
     }
 }

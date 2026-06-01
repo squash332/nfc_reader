@@ -14,8 +14,9 @@ void ws_init()
     esp_websocket_client_config_t cfg = {};
     cfg.uri = WS_URL;
     cfg.reconnect_timeout_ms = 5000;
-    cfg.network_timeout_ms = 5000;
-    cfg.buffer_size = 16400; // 
+    cfg.network_timeout_ms = 10000;
+    cfg.ping_interval_sec = 10;
+    cfg.buffer_size = 16400;
 
     ws_client = esp_websocket_client_init(&cfg);
     esp_websocket_client_start(ws_client);
@@ -23,29 +24,24 @@ void ws_init()
     ESP_LOGI(TAG, "WebSocket started");
 }
 
-void send_frame(const uint8_t *buf, size_t len)
+bool send_frame(const uint8_t *buf, size_t len)
 {
-    if (!ws_client)
-    {
-        ESP_LOGE(TAG, "WS client not initialized");
-        return;
-    }
-    if (!buf || len == 0)
-    {
-        ESP_LOGE(TAG, "Invalid frame data");
-        return;
-    }
+    if (!ws_client || !buf || len == 0)
+        return false;
 
     if (!esp_websocket_client_is_connected(ws_client))
     {
         ESP_LOGW(TAG, "WS not connected, skipping frame");
-        return;
+        return false;
     }
-    int ret = esp_websocket_client_send_bin(ws_client, (const char *)buf, len, 0);
+    int ret = esp_websocket_client_send_bin(ws_client, (const char *)buf, len, pdMS_TO_TICKS(8000));
     if (ret < 0)
+    {
         ESP_LOGW(TAG, "WS send failed");
-    else
-        ESP_LOGI(TAG, "Frame sent, %d bytes", len);
+        return false;
+    }
+    ESP_LOGI(TAG, "Frame sent, %d bytes", len);
+    return true;
 }
 
 void send_POST(const char *card_uid)
