@@ -842,7 +842,7 @@ def _mjpeg_generator():
                 + _latest_frame
                 + b"\r\n"
             )
-        time.sleep(0.075)
+        time.sleep(0.1)
 
 # ── NFC events ────────────────────────────────────────────────────────────────
 

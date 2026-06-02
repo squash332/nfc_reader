@@ -38,11 +38,7 @@ bool send_frame(const uint8_t *buf, size_t len)
         esp_http_client_close(frame_client);
         return false;
     }
-
-    esp_http_client_fetch_headers(frame_client);
-    int status = esp_http_client_get_status_code(frame_client);
-    ESP_LOGI(TAG, "Frame sent %d bytes, status=%d", len, status);
-    return status == 204;
+    return true;
 }
 
 void send_POST(const char *card_uid)

@@ -15,5 +15,5 @@ void app_init()
     // }
     // ESP_LOGI(TAG, "PN532 init success!");
 
-    ESP_LOGW("MAIN", "ready");
+    ESP_LOGW("MAIN", "initializing...");
 }
