@@ -72,7 +72,7 @@ public:
     Camera &operator=(const Camera &) = delete;
 
 
-    std::vector<uint8_t> *capture();
+    std::vector<uint8_t> capture();
 
 private:
     camera_config_t _config;

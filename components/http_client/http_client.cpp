@@ -60,7 +60,6 @@ bool send_frame(const uint8_t *buf, size_t len)
         ESP_LOGW(TAG, "WS send failed (ret=%d)", ret);
         return false;
     }
-    ESP_LOGI(TAG, "Frame sent, %d bytes", len);
     return true;
 }
 

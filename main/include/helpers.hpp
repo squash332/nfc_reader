@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 #include <stdio.h>
 #include "esp_log.h"
@@ -8,10 +8,4 @@
 #include <pn532.h>
 #include "camera.hpp"
 
-
 void app_init();
-void sendBufferTask(void *arg);
-void drainQueue();
-
-static TaskHandle_t sendBufferHandle;
-extern QueueHandle_t imgBufferQueue;

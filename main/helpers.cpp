@@ -1,8 +1,5 @@
 #include "helpers.hpp"
 #include "esp_log.h"
-#include "esp_timer.h"
-
-QueueHandle_t imgBufferQueue;
 
 void app_init()
 {
@@ -21,58 +18,7 @@ void app_init()
     ESP_LOGW("MAIN", "initializing...");
     while (!ws_is_connected())
     {
-        ESP_LOGI("WS", "not connected - retrying... ");
+        ESP_LOGI("WS", "not connected - retrying...");
         vTaskDelay(pdMS_TO_TICKS(1000));
-    }
-}
-
-void drainQueue()
-{
-    std::vector<uint8_t> *stale = nullptr;
-    while (xQueueReceive(imgBufferQueue, &stale, 0) == pdTRUE) {
-        delete stale;
-        ESP_LOGI("DRAIN_QUEUE()", "deleted stale frame");
-    }
-}
-
-void sendBufferTask(void *arg)
-{
-    if (!ws_is_connected())
-        return;
-
-    std::vector<uint8_t> *frame = nullptr;
-
-    while (true)
-    {
-        if (xQueueReceive(imgBufferQueue, &frame, portMAX_DELAY) != pdTRUE)
-            continue;
-
-        // keep only latest frame
-        std::vector<uint8_t> *newer = nullptr;
-        while (xQueueReceive(imgBufferQueue, &newer, 0) == pdTRUE)
-        {
-            delete frame;
-            frame = newer;
-            ESP_LOGI("sendBufferTask", "discarding stale frame.");
-        }
-
-        if (!frame)
-            continue;
-
-        int64_t start = esp_timer_get_time();
-        bool ok = send_frame(frame->data(), frame->size());
-        int64_t elapsed = (esp_timer_get_time() - start) / 1000;
-        ESP_LOGI("TASK", "Send took: %lld ms", elapsed);
-
-        delete frame;
-        frame = nullptr;
-
-        if (!ok && !ws_is_connected())
-        {
-            drainQueue();
-            ESP_LOGW("TASK", "WS disconnected, draining and waiting for reconnect...");
-            while (!ws_is_connected())
-                vTaskDelay(pdMS_TO_TICKS(200));
-        }
     }
 }

@@ -22,15 +22,15 @@ Camera::~Camera()
     esp_camera_deinit();
 }
 
-std::vector<uint8_t> *Camera::capture()
+std::vector<uint8_t> Camera::capture()
 {
     camera_fb_t *fb = esp_camera_fb_get();
     if (!fb)
     {
         ESP_LOGE(TAG, "Frame buffer could not be acquired");
-        return nullptr;
+        return {};
     }
-    auto *data = new std::vector<uint8_t>(fb->buf, fb->buf + fb->len);
+    std::vector<uint8_t> data(fb->buf, fb->buf + fb->len);
     esp_camera_fb_return(fb);
     return data;
 }

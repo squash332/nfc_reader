@@ -1,4 +1,5 @@
 #include "helpers.hpp"
+#include <esp_timer.h>
 
 static const char *TAG = "MAIN";
 
@@ -6,30 +7,32 @@ extern "C" void app_main()
 {
     app_init();
     Camera cam{};
-    imgBufferQueue = xQueueCreate(4, sizeof(std::vector<uint8_t> *));
-    xTaskCreatePinnedToCore(sendBufferTask, "sendBufferTask", 8192, NULL, 5, &sendBufferHandle, 1);
 
     while (true)
     {
-        if (ws_is_connected())
+        if (!ws_is_connected())
         {
-            auto *frame = cam.capture();
-            if (frame)
+            ESP_LOGI(TAG, "waiting for websocket...");
+            vTaskDelay(pdMS_TO_TICKS(3000));
+            continue;
+        }
+
+        auto frame = cam.capture();
+        if (!frame.empty())
+        {
+            int64_t start = esp_timer_get_time();
+            bool ok = send_frame(frame.data(), frame.size());
+            int64_t elapsed = (esp_timer_get_time() - start) / 1000;
+            ESP_LOGI(TAG, "Send took: %lld ms (%zu bytes)", elapsed, frame.size());
+
+            if (!ok && !ws_is_connected())
             {
-                ESP_LOGI(TAG, "frame captured — queue: %u/4", uxQueueMessagesWaiting(imgBufferQueue));
-                if (xQueueSend(imgBufferQueue, &frame, 0) != pdTRUE)
-                {
-                    drainQueue();
-                    xQueueSend(imgBufferQueue, &frame, 0);
-                    ESP_LOGW(TAG, "Queue was full, drained and pushed latest frame");
-                }
+                ESP_LOGW(TAG, "WS disconnected, waiting for reconnect...");
+                while (!ws_is_connected())
+                    vTaskDelay(pdMS_TO_TICKS(200));
             }
         }
-        else
-        {
-            ESP_LOGI(TAG, "waiting for websocket connection to open...");
-            vTaskDelay(pdMS_TO_TICKS(3000));
-        }
-        vTaskDelay(pdMS_TO_TICKS(150));
+
+        vTaskDelay(pdMS_TO_TICKS(75));
     }
 }
