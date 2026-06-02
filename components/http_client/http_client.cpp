@@ -1,66 +1,48 @@
 #include "http_client.hpp"
 static const char *TAG = "HTTP_CLIENT";
 #define BASE_URL CONFIG_BASE_URL
-#define WS_URL CONFIG_WS_URL
 
-static esp_websocket_client_handle_t ws_client = NULL;
-static volatile bool _ws_connected = false;
+static esp_http_client_handle_t frame_client = NULL;
 
-static void ws_event_handler(void *arg, esp_event_base_t base, int32_t event_id, void *data)
+void http_init()
 {
-    switch (event_id) {
-    case WEBSOCKET_EVENT_CONNECTED:
-        _ws_connected = true;
-        ESP_LOGI(TAG, "WS connected");
-        break;
-    case WEBSOCKET_EVENT_DISCONNECTED:
-    case WEBSOCKET_EVENT_ERROR:
-    case WEBSOCKET_EVENT_CLOSED:
-        _ws_connected = false;
-        ESP_LOGW(TAG, "WS disconnected");
-        break;
-    default:
-        break;
-    }
-}
+    esp_http_client_config_t cfg = {};
+    cfg.url = BASE_URL "/camera/frame";
+    cfg.method = HTTP_METHOD_POST;
+    cfg.timeout_ms = 3000;
+    cfg.keep_alive_enable = true;
 
-bool ws_is_connected() {
-    return _ws_connected;
-}
-
-void ws_init()
-{
-    esp_websocket_client_config_t cfg = {};
-    cfg.uri = WS_URL;
-    cfg.reconnect_timeout_ms = 5000;
-    cfg.network_timeout_ms = 2000;
-    cfg.ping_interval_sec = 10;
-    cfg.buffer_size = 16400;
-
-    ws_client = esp_websocket_client_init(&cfg);
-    esp_websocket_register_events(ws_client, WEBSOCKET_EVENT_ANY, ws_event_handler, NULL);
-    esp_websocket_client_start(ws_client);
-    vTaskDelay(pdMS_TO_TICKS(500));
-    ESP_LOGI(TAG, "WebSocket started");
+    frame_client = esp_http_client_init(&cfg);
+    ESP_LOGI(TAG, "HTTP client ready");
 }
 
 bool send_frame(const uint8_t *buf, size_t len)
 {
-    if (!ws_client || !buf || len == 0)
+    if (!frame_client || !buf || len == 0)
         return false;
 
-    if (!_ws_connected)
+    esp_http_client_set_header(frame_client, "Content-Type", "image/jpeg");
+
+    esp_err_t err = esp_http_client_open(frame_client, len);
+    if (err != ESP_OK)
     {
-        ESP_LOGW(TAG, "WS not connected, skipping frame");
+        ESP_LOGW(TAG, "open failed: %s", esp_err_to_name(err));
+        esp_http_client_close(frame_client);
         return false;
     }
-    int ret = esp_websocket_client_send_bin(ws_client, (const char *)buf, len, portMAX_DELAY);
-    if (ret != (int)len)
+
+    int written = esp_http_client_write(frame_client, (const char *)buf, len);
+    if (written < 0)
     {
-        ESP_LOGW(TAG, "WS send failed (ret=%d)", ret);
+        ESP_LOGW(TAG, "write failed");
+        esp_http_client_close(frame_client);
         return false;
     }
-    return true;
+
+    esp_http_client_fetch_headers(frame_client);
+    int status = esp_http_client_get_status_code(frame_client);
+    ESP_LOGI(TAG, "Frame sent %d bytes, status=%d", len, status);
+    return status == 204;
 }
 
 void send_POST(const char *card_uid)

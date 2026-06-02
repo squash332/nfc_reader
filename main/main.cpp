@@ -10,27 +10,14 @@ extern "C" void app_main()
 
     while (true)
     {
-        if (!ws_is_connected())
-        {
-            ESP_LOGI(TAG, "waiting for websocket...");
-            vTaskDelay(pdMS_TO_TICKS(3000));
-            continue;
-        }
-
         auto frame = cam.capture();
         if (!frame.empty())
         {
             int64_t start = esp_timer_get_time();
             bool ok = send_frame(frame.data(), frame.size());
             int64_t elapsed = (esp_timer_get_time() - start) / 1000;
-            ESP_LOGI(TAG, "Send took: %lld ms (%zu bytes)", elapsed, frame.size());
-
-            if (!ok && !ws_is_connected())
-            {
-                ESP_LOGW(TAG, "WS disconnected, waiting for reconnect...");
-                while (!ws_is_connected())
-                    vTaskDelay(pdMS_TO_TICKS(200));
-            }
+            if (!ok)
+                ESP_LOGW(TAG, "send failed (%lld ms)", elapsed);
         }
 
         vTaskDelay(pdMS_TO_TICKS(75));

@@ -1,5 +1,4 @@
 import re
-import asyncio
 import secrets
 import string
 import smtplib
@@ -15,7 +14,6 @@ from typing import Optional
 from fastapi import Response, Request
 
 from fastapi import HTTPException
-from fastapi import WebSocket
 
 # ── Camera state ──────────────────────────────────────────────────────────────
 _cam_active: bool       = False
@@ -817,17 +815,12 @@ def delete_user(user_id: int):
 
 
 
-@router.websocket("/camera/ws")
-async def camera_ws(websocket: WebSocket):
+@router.post("/camera/frame")
+async def camera_frame(request: Request):
     global _latest_frame, _frame_seq
-    await websocket.accept()
-    try:
-        while True:
-            data = await websocket.receive_bytes()
-            _latest_frame = data
-            _frame_seq += 1
-    except Exception as e:
-        print(f"[camera_ws] disconnected: {type(e).__name__}: {e}")
+    _latest_frame = await request.body()
+    _frame_seq += 1
+    return Response(status_code=204)
 
 @router.get("/camera/stream")
 async def camera_stream():
@@ -849,7 +842,7 @@ def _mjpeg_generator():
                 + _latest_frame
                 + b"\r\n"
             )
-        time.sleep(0.1)
+        time.sleep(0.075)
 
 # ── NFC events ────────────────────────────────────────────────────────────────
 
