@@ -7,9 +7,9 @@ static esp_http_client_handle_t frame_client = NULL;
 void http_init()
 {
     esp_http_client_config_t cfg = {};
-    cfg.url = BASE_URL "/camera/frame";
-    cfg.method = HTTP_METHOD_POST;
-    cfg.timeout_ms = 3000;
+    cfg.url              = BASE_URL "/camera/frame";
+    cfg.method           = HTTP_METHOD_POST;
+    cfg.timeout_ms       = 3000;
     cfg.keep_alive_enable = true;
 
     frame_client = esp_http_client_init(&cfg);
@@ -38,14 +38,16 @@ bool send_frame(const uint8_t *buf, size_t len)
         esp_http_client_close(frame_client);
         return false;
     }
+
+    esp_http_client_fetch_headers(frame_client);
     return true;
 }
 
 void send_POST(const char *card_uid)
 {
     esp_http_client_config_t cfg = {};
-    cfg.url = BASE_URL "/event";
-    cfg.method = HTTP_METHOD_POST;
+    cfg.url        = BASE_URL "/event";
+    cfg.method     = HTTP_METHOD_POST;
     cfg.timeout_ms = 3000;
 
     esp_http_client_handle_t c = esp_http_client_init(&cfg);

@@ -4,8 +4,8 @@ from pathlib import Path
 import jwt as pyjwt
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from starlette.middleware.base import Request
-from starlette.responses import RedirectResponse, JSONResponse
+from fastapi import Request
+from fastapi.responses import RedirectResponse, JSONResponse
 
 _env = Path(__file__).parent.parent / ".env"
 if _env.exists():
@@ -22,7 +22,7 @@ from routes import router, static_directory
 
 app = FastAPI()
 
-EXEMPT       = {"/login", "/auth/login", "/auth/logout", "/event", "/tag/redeem", "/camera/frame" }
+EXEMPT       = {"/login", "/auth/login", "/auth/logout", "/event", "/tag/redeem", "/camera/frame"}
 SETUP_PATHS  = {"/register", "/auth/register"}
 
 

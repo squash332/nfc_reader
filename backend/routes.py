@@ -4,8 +4,6 @@ import string
 import smtplib
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta, timezone
-from starlette.requests import ClientDisconnect
-
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse, StreamingResponse
 import os
@@ -832,14 +830,13 @@ async def camera_frame(request: Request):
 
 @router.get("/camera/stream")
 async def camera_stream():
-    from starlette.concurrency import iterate_in_threadpool
     return StreamingResponse(
-        iterate_in_threadpool(_mjpeg_generator()),
+        _mjpeg_generator(),
         media_type="multipart/x-mixed-replace; boundary=frame",
     )
 
-def _mjpeg_generator():
-    import time
+async def _mjpeg_generator():
+    import asyncio
     last_seq = -1
     while True:
         if _latest_frame and _frame_seq != last_seq:
@@ -850,7 +847,7 @@ def _mjpeg_generator():
                 + _latest_frame
                 + b"\r\n"
             )
-        time.sleep(0.1)
+        await asyncio.sleep(0.1)
 
 # ── NFC events ────────────────────────────────────────────────────────────────
 
