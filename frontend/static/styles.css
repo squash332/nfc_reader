@@ -220,6 +220,37 @@ html, body {
     overflow: hidden;
 }
 
+/* ── LIVE CAMERA BADGE ── */
+.cam-live-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    margin: -8px -4px 0;
+    border: 1px solid var(--green-dim);
+    border-radius: var(--radius);
+    background: var(--green-glow);
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--green);
+}
+
+.cam-live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+    animation: cam-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes cam-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.35; }
+}
+
 .presence-list {
     list-style: none;
     overflow-y: auto;

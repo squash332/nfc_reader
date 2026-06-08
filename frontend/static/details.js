@@ -1,6 +1,19 @@
 import { initAuth } from './auth_guard.js';
 initAuth();
 
+// ── CAMERA STATUS ─────────────────────────────────────────────────────────────
+
+async function pollCameraStatus() {
+    try {
+        const res = await fetch('/camera/status');
+        const data = await res.json();
+        const badge = document.getElementById('cam-live-badge');
+        if (badge) badge.style.display = data.active ? 'flex' : 'none';
+    } catch {}
+}
+pollCameraStatus();
+setInterval(pollCameraStatus, 5000);
+
 const apiUrl = 'http://127.0.0.1:8000/details/data';
 const tagApiUrl = 'http://127.0.0.1:8000/tag/search';
 

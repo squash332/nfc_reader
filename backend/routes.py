@@ -19,6 +19,7 @@ from fastapi import HTTPException
 _cam_active: bool       = False
 _latest_frame: bytes    = b""
 _frame_seq: int         = 0
+_last_frame_time: float = 0.0
 from auth import hash_pw, check_pw, make_token, read_token
 from database import get_connection
 from models import RedeemCode
@@ -815,11 +816,18 @@ def delete_user(user_id: int):
 
 
 
+@router.get("/camera/status")
+def camera_status():
+    import time
+    return {"active": (time.time() - _last_frame_time) < 10}
+
 @router.post("/camera/frame")
 async def camera_frame(request: Request):
-    global _latest_frame, _frame_seq
+    global _latest_frame, _frame_seq, _last_frame_time
+    import time
     _latest_frame = await request.body()
     _frame_seq += 1
+    _last_frame_time = time.time()
     return Response(status_code=204)
 
 @router.get("/camera/stream")

@@ -6,6 +6,17 @@ const apiUrl = 'http://127.0.0.1:8000/tag';
 let allTags = [];
 let allUsers = [];
 
+// ── CAMERA STATUS ─────────────────────────────────────────────────────────────
+
+async function pollCameraStatus() {
+    try {
+        const res = await fetch('/camera/status');
+        const data = await res.json();
+        const badge = document.getElementById('cam-live-badge');
+        if (badge) badge.style.display = data.active ? 'flex' : 'none';
+    } catch {}
+}
+
 // ── PRESENCE PANEL ────────────────────────────────────────────────────────────
 
 async function fetchPresent() {
@@ -327,6 +338,8 @@ window.onload = async () => {
     loadTags();
     loadPresence();
     setInterval(loadPresence, 30000);
+    pollCameraStatus();
+    setInterval(pollCameraStatus, 5000);
 
     fetch('http://127.0.0.1:8000/user').then(r => r.json()).then(d => { allUsers = d.users || []; });
 
