@@ -166,3 +166,32 @@
     color: var(--text-dim);
     letter-spacing: 1px;
 }
+
+.cam-toggle-btn {
+    margin-top: 10px;
+    width: 100%;
+    padding: 8px 0;
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    border: 1px solid var(--border-lit);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.cam-toggle-btn.on {
+    border-color: var(--accent-red, #c0392b);
+    color: var(--accent-red, #c0392b);
+}
+
+.cam-toggle-btn.off {
+    border-color: var(--accent-green, #27ae60);
+    color: var(--accent-green, #27ae60);
+}
+
+.cam-toggle-btn:hover {
+    background: var(--border);
+}

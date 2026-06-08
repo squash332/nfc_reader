@@ -15,6 +15,7 @@ from fastapi import HTTPException
 
 # ── Camera state ──────────────────────────────────────────────────────────────
 _cam_active: bool       = False
+_cam_enabled: bool      = True
 _latest_frame: bytes    = b""
 _frame_seq: int         = 0
 _last_frame_time: float = 0.0
@@ -819,9 +820,22 @@ def camera_status():
     import time
     return {"active": (time.time() - _last_frame_time) < 10}
 
+@router.get("/camera/enabled")
+def camera_enabled():
+    return {"enabled": _cam_enabled}
+
+@router.post("/camera/control")
+async def camera_control(request: Request):
+    global _cam_enabled
+    body = await request.json()
+    _cam_enabled = bool(body.get("enabled", True))
+    return {"enabled": _cam_enabled}
+
 @router.post("/camera/frame")
 async def camera_frame(request: Request):
     global _latest_frame, _frame_seq, _last_frame_time
+    if not _cam_enabled:
+        return Response(status_code=503)
     import time
     _latest_frame = await request.body()
     _frame_seq += 1

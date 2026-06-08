@@ -66,7 +66,7 @@ esp_err_t wifi_init_sta()
             .bssid_set = false,
             .bssid = {0},
             .channel = 0,
-            .listen_interval = 1,
+            .listen_interval = 3,
             .sort_method = WIFI_CONNECT_AP_BY_SIGNAL,
             .threshold = {
                 .rssi = -127,
