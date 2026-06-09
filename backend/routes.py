@@ -14,7 +14,6 @@ from fastapi import Response, Request
 from fastapi import HTTPException
 
 # ── Camera state ──────────────────────────────────────────────────────────────
-_cam_active: bool       = False
 _cam_enabled: bool      = True
 _latest_frame: bytes    = b""
 _frame_seq: int         = 0
@@ -837,7 +836,12 @@ async def camera_frame(request: Request):
     if not _cam_enabled:
         return Response(status_code=503)
     import time
-    _latest_frame = await request.body()
+    from starlette.requests import ClientDisconnect
+    try:
+        body = await request.body()
+    except ClientDisconnect:
+        return Response(status_code=204)
+    _latest_frame = body
     _frame_seq += 1
     _last_frame_time = time.time()
     return Response(status_code=204)
@@ -852,16 +856,19 @@ async def camera_stream():
 async def _mjpeg_generator():
     import asyncio
     last_seq = -1
-    while True:
-        if _latest_frame and _frame_seq != last_seq:
-            last_seq = _frame_seq
-            yield (
-                b"--frame\r\n"
-                b"Content-Type: image/jpeg\r\n\r\n"
-                + _latest_frame
-                + b"\r\n"
-            )
-        await asyncio.sleep(0.1)
+    try:
+        while True:
+            if _latest_frame and _frame_seq != last_seq:
+                last_seq = _frame_seq
+                yield (
+                    b"--frame\r\n"
+                    b"Content-Type: image/jpeg\r\n\r\n"
+                    + _latest_frame
+                    + b"\r\n"
+                )
+            await asyncio.sleep(0.1)
+    except GeneratorExit:
+        pass
 
 # ── NFC events ────────────────────────────────────────────────────────────────
 
