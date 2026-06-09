@@ -22,7 +22,8 @@ from routes import router, static_directory
 
 app = FastAPI()
 
-EXEMPT       = {"/login", "/auth/login", "/auth/logout", "/event", "/tag/redeem", "/camera/frame", "/camera/enabled"}
+EXEMPT       = {"/login", "/auth/login", "/auth/logout", "/event", "/tag/redeem", "/camera/enabled"}
+CAM_INGEST   = {"/camera/frame"}
 SETUP_PATHS  = {"/register", "/auth/register"}
 
 
@@ -39,6 +40,14 @@ class AuthMiddleware:
         path = request.url.path
 
         if path.startswith("/static") or path in EXEMPT:
+            await self.app(scope, receive, send)
+            return
+
+        if path in CAM_INGEST:
+            if API_KEY and request.headers.get("X-API-Key") != API_KEY:
+                response = JSONResponse({"error": "unauthorized"}, status_code=401)
+                await response(scope, receive, send)
+                return
             await self.app(scope, receive, send)
             return
 
