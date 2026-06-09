@@ -13,6 +13,10 @@ void http_init()
     cfg.keep_alive_enable = true;
 
     frame_client = esp_http_client_init(&cfg);
+
+    if (strlen(CONFIG_API_KEY) > 0)
+        esp_http_client_set_header(frame_client, "X-API-Key", CONFIG_API_KEY);
+
     ESP_LOGI(TAG, "HTTP client ready");
 }
 
@@ -27,7 +31,8 @@ int send_frame(const uint8_t *buf, size_t len)
     if (err != ESP_OK)
     {
         ESP_LOGW(TAG, "open failed: %s", esp_err_to_name(err));
-        esp_http_client_close(frame_client);
+        esp_http_client_cleanup(frame_client);
+        frame_client = NULL;
         return 0;
     }
 
@@ -35,7 +40,8 @@ int send_frame(const uint8_t *buf, size_t len)
     if (written < 0)
     {
         ESP_LOGW(TAG, "write failed");
-        esp_http_client_close(frame_client);
+        esp_http_client_cleanup(frame_client);
+        frame_client = NULL;
         return 0;
     }
 
@@ -50,6 +56,15 @@ int send_frame(const uint8_t *buf, size_t len)
         return -1;
     }
 
+    if (status < 200 || status >= 300)
+    {
+        ESP_LOGW(TAG, "unexpected status %d, cleaning up", status);
+        esp_http_client_cleanup(frame_client);
+        frame_client = NULL;
+        return 0;
+    }
+
+    esp_http_client_close(frame_client);
     return 1;
 }
 

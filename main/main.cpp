@@ -39,6 +39,13 @@ extern "C" void app_main()
                 continue;
             }
 
+            if (result == 0)
+            {
+                ESP_LOGW(TAG, "Send failed, will retry");
+                vTaskDelay(pdMS_TO_TICKS(1000));
+                continue;
+            }
+
             ESP_LOGI(TAG, "Send took: %lld ms (%zu bytes)", elapsed, frame.size());
             ESP_LOGI(TAG, "CAPTURED FRAME!");
         }
