@@ -199,12 +199,9 @@ html, body {
     border-bottom: 1px solid var(--border);
 }
 
-.sidebar .cam-live-badge {
-    margin: 0;
-    padding: 14px 20px;
-    border-radius: 0;
-    border: none;
-    border-bottom: 1px solid var(--green-dim);
+.sidebar .cam-widget {
+    padding: 14px 20px 16px;
+    border-bottom: 1px solid var(--border);
 }
 
 .section-label {

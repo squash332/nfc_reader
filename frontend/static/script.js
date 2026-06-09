@@ -6,14 +6,36 @@ const apiUrl = 'http://127.0.0.1:8000/tag';
 let allTags = [];
 let allUsers = [];
 
-// ── CAMERA STATUS ─────────────────────────────────────────────────────────────
+// ── CAMERA WIDGET ─────────────────────────────────────────────────────────────
+
+let _camFeedActive = false;
 
 async function pollCameraStatus() {
     try {
-        const res = await fetch('/camera/status');
+        const res  = await fetch('/camera/status');
         const data = await res.json();
-        const badge = document.getElementById('cam-live-badge');
-        if (badge) badge.style.display = data.active ? 'flex' : 'none';
+        const dot     = document.getElementById('cam-dot');
+        const status  = document.getElementById('cam-widget-status');
+        const img     = document.getElementById('cam-feed-img');
+        const offline = document.getElementById('cam-widget-offline');
+        if (!dot) return;
+
+        if (data.active) {
+            if (!_camFeedActive) { img.src = '/camera/stream'; _camFeedActive = true; }
+            dot.classList.add('live');
+            status.textContent      = 'LIVE';
+            status.classList.add('live');
+            img.style.display       = 'block';
+            offline.style.display   = 'none';
+        } else {
+            _camFeedActive          = false;
+            img.src                 = '';
+            img.style.display       = 'none';
+            offline.style.display   = 'flex';
+            dot.classList.remove('live');
+            status.textContent      = 'NO SIGNAL';
+            status.classList.remove('live');
+        }
     } catch {}
 }
 

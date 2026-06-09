@@ -24,9 +24,18 @@
             <!-- ── LEFT: PRESENCE PANEL ── -->
             <aside class="presence-panel">
 
-                <div class="cam-live-badge" id="cam-live-badge" style="display:none">
-                    <span class="cam-live-dot"></span>
-                    LIVE CAMERA FEED
+                <div class="cam-widget">
+                    <div class="cam-widget-bar">
+                        <span class="cam-live-dot" id="cam-dot"></span>
+                        <span class="cam-widget-status" id="cam-widget-status">CONNECTING</span>
+                    </div>
+                    <div class="cam-widget-body">
+                        <img id="cam-feed-img" class="cam-widget-img" src="" alt="">
+                        <div class="cam-widget-offline" id="cam-widget-offline">
+                            <span class="cam-widget-offline-icon">⊡</span>
+                            <span class="cam-widget-offline-label">NO SIGNAL</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="panel-heading">
